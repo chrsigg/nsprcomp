@@ -1,0 +1,9 @@
+bibentry("InProceedings",
+    key = "sigg2008expectation",
+    author = "Christian D. Sigg and Joachim M. Buhmann",
+    title = "Expectation-Maximization for Sparse and Non-Negative PCA",
+    booktitle = "Proc. 25th International Conference on Machine Learning",
+    year = "2008",
+
+    mheader = "If you find this package useful for your work, please cite:"
+)

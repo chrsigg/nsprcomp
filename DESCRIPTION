@@ -1,0 +1,23 @@
+Package: nsprcomp
+Authors@R: c( person("Sigg", "Christian", email =
+    "christian@sigg-iten.ch", role = c("aut", "cre")),
+    person("R Core team", role = "aut"))
+Version: 0.1
+Date: 2013-02-09
+Title: Non-Negative Sparse PCA
+Description: Performs a constrained principal component analysis (PCA) on the
+    given data matrix, where non-negativity and/or sparsity constraints are
+    enforced on the principal axes. Each principal component (PC) is computed
+    using expectation-maximization iterations, and several deflation methods
+    are provided to compute subsequent PCs. The results are returned as an
+    object of class 'nsprcomp', which inherits from 'prcomp'.
+License: GPL (>=2)
+Imports:
+    stats
+Suggests:
+    testthat,
+    roxygen2,
+    MASS
+Collate:
+    'nsprcomp-package.r'
+    'nsprcomp.R'

@@ -1,0 +1,4 @@
+export(nsprcomp)
+import(stats)
+S3method(nsprcomp,default)
+S3method(nsprcomp,formula)
