@@ -27,7 +27,7 @@
 #' Further PCs are computed by deflating the data matrix and computing the next PC,
 #' and so on.
 #' 
-#' Because constrained PCs no longer correspond to true eigenvectors of the
+#' Because constrained principal axes (PAs) no longer correspond to true eigenvectors of the
 #' covariance matrix, the package implements three different matrix deflation 
 #' techniques to compute more than a single PC. Orthogonal projection deflation 
 #' (\code{"ortho"}) projects the data 
@@ -107,10 +107,7 @@ nsprcomp <- function (x, ...) UseMethod("nsprcomp")
 #' \item{y}{if \code{rety} is \code{TRUE} the deflated data matrix, for which all
 #'   principal axes lie in its null space.}
 #'   
-#' @note \code{nsprcomp} can handle high-dimensional data and the 
-#' \code{nrow(x) << ncol(x)} case efficiently. 
-#' 
-#' Deflating the data matrix accumulates numerical errors over successive
+#' @note Deflating the data matrix accumulates numerical errors over successive
 #' PCs.
 #'   
 #' @references Sigg, C. D. and Buhmann, J. M. (2008) Expectation-Maximization 
