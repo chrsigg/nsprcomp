@@ -1,4 +1,4 @@
-#  Copyright 2012, 2013 Christian Sigg
+#  Copyright 2013 Christian Sigg
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-context("nspca.formula")
+context("nscumcomp.formula")
 
 test_that("subset and na_exclude", {
     d <- 3
@@ -22,6 +22,7 @@ test_that("subset and na_exclude", {
     X[5,1] <- NA
     colnames(X) <- c("One", "Two", "Three")
     
-    nspc <- nsprcomp(~ One + Three, data = X, 1:(n-1), na.exclude)
-    expect_true(is.na(nspc$x[5,1]))
+    nscc <- nscumcomp(~ One + Three, data = X, 1:(n-1), 
+                      na.exclude, ncomp = 1, gamma = 10)
+    expect_equal(unname(nscc$x[5,1]), NA_integer_)
 })

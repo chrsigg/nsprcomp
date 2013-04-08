@@ -142,24 +142,22 @@
   thresholding. Further PCs are computed by deflating the
   data matrix and computing the next PC, and so on.
 
-  Because constrained PCs no longer correspond to true
-  eigenvectors of the covariance matrix, the package
-  implements three different matrix deflation techniques to
-  compute more than a single PC. Orthogonal projection
-  deflation (\code{"ortho"}) projects the data matrix onto
-  the orthocomplement space spanned by the principal axes.
-  Schur complement deflation (\code{"Schur"}) projects the
-  data matrix onto the orthocomplement space spanned by the
-  principal components. Finally, subset removal
-  (\code{"remove"}) simply removes all columns of the data
-  matrix which are associated with non-zero loadings.
+  Because constrained principal axes (PAs) no longer
+  correspond to true eigenvectors of the covariance matrix,
+  the package implements three different matrix deflation
+  techniques to compute more than a single PC. Orthogonal
+  projection deflation (\code{"ortho"}) projects the data
+  matrix onto the orthocomplement space spanned by the
+  principal axes. Schur complement deflation
+  (\code{"Schur"}) projects the data matrix onto the
+  orthocomplement space spanned by the principal
+  components. Finally, subset removal (\code{"remove"})
+  simply removes all columns of the data matrix which are
+  associated with non-zero loadings.
 
   See the references for further details.
 }
 \note{
-  \code{nsprcomp} can handle high-dimensional data and the
-  \code{nrow(x) << ncol(x)} case efficiently.
-
   Deflating the data matrix accumulates numerical errors
   over successive PCs.
 }

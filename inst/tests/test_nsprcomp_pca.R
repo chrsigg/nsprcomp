@@ -13,7 +13,7 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-context("unconstrained PCA")
+context("nsprcomp.pca")
 
 test_that("PCA equivalence, square", {
     set.seed(1)

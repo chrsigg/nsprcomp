@@ -1,4 +1,7 @@
+export(nscumcomp)
 export(nsprcomp)
 import(stats)
+S3method(nscumcomp,default)
+S3method(nscumcomp,formula)
 S3method(nsprcomp,default)
 S3method(nsprcomp,formula)
