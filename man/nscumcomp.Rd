@@ -109,29 +109,31 @@
   jointly optimizes the PAs such that the cumulative
   variance of all PCs is maximal. Furthermore, only
   quasi-orthogonality is enforced between PAs, which is
-  especially useful if they are constrained to lie in the
-  non-negative orthant.
+  especially useful if the PAs are constrained to lie in
+  the non-negative orthant.
 }
 \details{
   The results are returned as an object of class
   \code{nsprcomp}, which inherits from \code{prcomp}.
 
   \code{nscumcomp} computes all PCs jointly using
-  expectation-maximization (EM) iterations. Numerical
-  maximization is done using the L-BFGS-B algorithm, where
+  expectation-maximization (EM) iterations. The
+  maximization step employs the L-BFGS-B algorithm, where
   non-negativity of the loadings is achieved by enforcing a
-  zero lower bound. Sparsity is achieved by soft
-  thresholding of the rotation matrix. Once the support of
-  the rotation matrix is identified, the loadings are
-  recomputed to maximize cumulative variance.
+  zero lower bound. Sparsity is achieved by a subsequent
+  soft thresholding of the rotation matrix.
 }
 \examples{
 library(MASS)
 
 # Sparse cumulative PCA with three components and 25 non-zero loadings
-# of the rotation matrix. A high orthonormality penalty is necessary to
+# of the rotation matrix. The high orthonormality penalty is necessary to
 # avoid co-linear principal axes.
-nscumcomp(Boston, ncomp = 3, k = 15, gamma = 10000)  
+nscumcomp(Boston, ncomp = 3, k = 15, gamma = 1e6)  
+
+# Non-negative sparse cumulative PCA with unequal weighting of samples
+nscumcomp(Boston, ncomp = 5, k = 15, nneg = TRUE, omega = 1:nrow(Boston), 
+          gamma = 1e8)  
 }
 \seealso{
   \code{\link{nsprcomp}}, \code{\link{prcomp}},

@@ -22,17 +22,15 @@
 #' such that the variance of each principal component (PC) is maximal, \code{nscumcomp} 
 #' jointly optimizes the PAs such that the cumulative variance of all PCs is maximal.
 #' Furthermore, only quasi-orthogonality is enforced between PAs, which is especially
-#' useful if they are constrained to lie in the non-negative orthant.
+#' useful if the PAs are constrained to lie in the non-negative orthant.
 #' 
 #' The results are returned as an object of class \code{nsprcomp}, which inherits from
 #' \code{prcomp}.
 #' 
 #' \code{nscumcomp} computes all PCs jointly using expectation-maximization (EM)
-#' iterations. Numerical maximization is done using the L-BFGS-B algorithm, 
+#' iterations. The maximization step employs the L-BFGS-B algorithm, 
 #' where non-negativity of the loadings is achieved by enforcing a zero lower bound.
-#' Sparsity is achieved by soft thresholding of the rotation matrix. Once the
-#' support of the rotation matrix is identified, the loadings are recomputed to
-#' maximize cumulative variance.
+#' Sparsity is achieved by a subsequent soft thresholding of the rotation matrix.
 #' 
 #' @export nscumcomp
 #' @param x a numeric matrix or data frame which provides the data 
@@ -115,14 +113,6 @@ nscumcomp.default <-
     cumsdev <- numeric(nrestart)
     for (rr in seq(nrestart)) {        
         W <- emcumca(x, omega, ncomp, k, nneg, gamma, em.tol)
-        print(sum(apply(x%*%W, 2, sd)))
-        
-        if (k < d*ncomp) {
-            print("renormalizing...")
-            # variational renormalization
-            W <- emcumca.support(W, x, omega, ncomp, nneg, gamma, em.tol)   
-            print(sum(apply(x%*%W, 2, sd)))
-        }
         
         # keep solution with maximum cumulative variance
         x.pc <- x%*%W
@@ -133,7 +123,6 @@ nscumcomp.default <-
             W.opt <- W
         }
     }
-    print(cumsdev)
     
     dimnames(W.opt) <-
         list(colnames(x), paste0("PC", seq_len(ncol(W.opt))))
@@ -215,51 +204,6 @@ emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol) {
         } else {
             W <- W.star
         }
-        
-        norms <- sqrt(colSums(W^2))
-        if (any(norms == 0))
-            stop("Principal axis is the zero vector, try increasing 'k' or decreasing 'ncomp'.")
-        W <- W/t(matrix(rep(norms, d), ncomp))
-    }
-    return(W)
-}
-
-emcumca.support <- function(W, X, omega, ncomp, nneg, gamma, em.tol) {
-    d <- ncol(X); n <- nrow(X)
-    Supp <- abs(W) > 0
-    
-    sdev.old <- 0
-    repeat {   
-        Y <- X%*%W%*%solve(t(W)%*%W)
-        
-        sdev <- apply(Y, 2, sd)
-        if (all(abs(sdev - sdev.old)/sdev < em.tol)) {
-            break
-        }
-        sdev.old <- sdev
-        
-        # objective function
-        fn <- function(w) {
-            W <- matrix(rep(0, d*ncomp), d);
-            W[Supp] <- w
-            return( omega%*%rowSums((X-Y%*%t(W))^2) + gamma*sum((t(W)%*%W - diag(ncomp))^2) )
-        }
-        
-        # gradient
-        gr <- function(w) {
-            W <- matrix(rep(0, d*ncomp), d);
-            W[Supp] <- w
-            G <- 2*(W%*%t(Y)%*%diag(omega)%*%Y - t(X)%*%diag(omega)%*%Y) + 
-                4*gamma*(W%*%t(W)%*%W - W)
-            return(G[Supp])
-        }
-        
-        control <- list()
-        control$trace <- 0
-        w <- optim(W[Supp], fn, gr, method = "L-BFGS-B",
-                        lower = ifelse(nneg, 0, -Inf), control = control)$par
-        W <- matrix(rep(0, d*ncomp), d);
-        W[Supp] <- w
         
         norms <- sqrt(colSums(W^2))
         if (any(norms == 0))
