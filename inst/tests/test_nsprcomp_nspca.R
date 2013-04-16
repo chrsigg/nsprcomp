@@ -16,6 +16,7 @@
 context("nsprcomp.nspca")
 
 test_that("cardinality", {
+    set.seed(1)
     X <- matrix(rnorm(5*5), 5)
     
     nspc.model <- nsprcomp(X, k = 1, nneg = TRUE)
@@ -32,6 +33,7 @@ test_that("cardinality", {
 })
 
 test_that("non-negativity", {
+    set.seed(1)
     X <- matrix(rnorm(5*5), 5)
     
     nspc.model <- nsprcomp(X, k = 4, nneg = TRUE)
@@ -42,6 +44,7 @@ test_that("deflation", {
     k <- 4
     d <- 20
     n <- 100
+    set.seed(1)
     X = matrix(runif(n*d), n)
     
     nspc <- nsprcomp(X, k = k, nneg = TRUE, rety = TRUE, deflation = "ortho")

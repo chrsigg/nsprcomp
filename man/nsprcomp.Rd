@@ -164,6 +164,8 @@
 \examples{
 library(MASS)
 
+set.seed(1)
+
 # Regular PCA, with tolerance set to return five PCs
 prcomp(Boston, tol = 0.36, scale. = TRUE)
 

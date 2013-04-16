@@ -18,6 +18,7 @@ context("nsprcomp.formula")
 test_that("subset and na_exclude", {
     d <- 3
     n <- 10
+    set.seed(1)
     X <- as.data.frame(matrix(runif(n*d), n))
     X[5,1] <- NA
     colnames(X) <- c("One", "Two", "Three")

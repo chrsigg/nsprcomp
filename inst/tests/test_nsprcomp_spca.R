@@ -16,6 +16,7 @@
 context("nsprcomp.spca")
 
 test_that("cardinality", {
+    set.seed(1)
     X <- matrix(rnorm(5*5), 5)
     
     nspc.model <- nsprcomp(X, k = 1)
@@ -34,6 +35,7 @@ test_that("cardinality", {
 })
 
 test_that("deflation", {
+    set.seed(1)
     k <- 4
     d <- 20
     n <- 100

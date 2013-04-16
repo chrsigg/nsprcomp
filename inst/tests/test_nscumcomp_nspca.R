@@ -29,9 +29,10 @@ test_that("cardinality", {
 })
 
 test_that("non-negativity", {
+    set.seed(1)
     X <- matrix(rnorm(20*10), 20)
     
-    nscc <- nscumcomp(X, ncomp = 5, gamma = 50, k = 10, nneg = TRUE)
+    nscc <- nscumcomp(X, ncomp = 5, gamma = 1e2, k = 10, nneg = TRUE)
     expect_true(all(nscc$rotation >= 0))
 })
 

@@ -64,6 +64,7 @@ test_that("PCA equivalence, skinny", {
 
 
 test_that("sdev tolerance early stopping", {
+    set.seed(1)
     X <- matrix(runif(10*10), 10)
     
     nspc <- nsprcomp(X, tol = 0.3)
