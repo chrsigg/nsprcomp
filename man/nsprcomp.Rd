@@ -128,11 +128,11 @@
   principal axes lie in its null space.}
 }
 \description{
-  Performs a constrained principal component analysis on
-  the given data matrix, where non-negativity and/or
-  sparsity constraints are enforced on the principal axes.
-  The results are returned as an object of class
-  \code{nsprcomp}, which inherits from \code{prcomp}.
+  Performs a constrained principal component analysis,
+  where non-negativity and/or sparsity constraints are
+  enforced on the principal axes. The results are returned
+  as an object of class \code{nsprcomp}, which inherits
+  from \code{prcomp}.
 }
 \details{
   \code{nsprcomp} computes a principal component (PC) using
@@ -164,14 +164,17 @@
 \examples{
 library(MASS)
 
-# sparse PCA with four components and five features per component
-nsprcomp(Boston, ncomp = 4, k = 5)  
+# Regular PCA, with tolerance set to return five PCs
+prcomp(Boston, tol = 0.36, scale. = TRUE)
 
-# sparse PCA with different cardinalities per component
-nsprcomp(Boston, k = c(1,1,2,2))  
+# Sparse PCA with different cardinalities per component. The number of components
+# is derived from the length of vector k.
+nsprcomp(Boston, k = c(13,7,5,5,5), scale. = TRUE)  
 
-# non-negative sparse PCA using subset removal as the deflation method
-nsprcomp(Boston, k = c(1,1,2,2,3), nneg = TRUE, deflation = "remove")  
+# Non-negative sparse PCA with subset removal as the deflation method
+# (note that the parameter k only specifies an upper bound on the PA cardinality)
+nsprcomp(Boston, k = c(6,5,5,5,5), nneg = TRUE, deflation = "remove",
+         scale. = TRUE)  
 }
 \references{
   Sigg, C. D. and Buhmann, J. M. (2008)

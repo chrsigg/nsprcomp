@@ -39,6 +39,11 @@
   principal axes should be constrained to the non-negative
   orthant.}
 
+  \item{gamma}{a positive number indicating the penalty on
+  the divergence from orthonormality of the rotation
+  matrix. A too small value for \code{gamma} results in
+  co-linear PAs and produces an error.}
+
   \item{center}{a logical value indicating whether the
   empirical mean of \code{x} should be subtracted.
   Alternately, a vector of length equal the number of
@@ -98,6 +103,9 @@
   to handle the treatment of values omitted by the
   \code{na.action}.} \item{center, scale}{the centering and
   scaling used, or \code{FALSE}.}
+
+  The components are returned in order of decreasing
+  variance for convenience.
 }
 \description{
   Performs a constrained PCA-like analysis on the given
@@ -113,27 +121,50 @@
   the non-negative orthant.
 }
 \details{
-  The results are returned as an object of class
-  \code{nsprcomp}, which inherits from \code{prcomp}.
-
   \code{nscumcomp} computes all PCs jointly using
   expectation-maximization (EM) iterations. The
-  maximization step employs the L-BFGS-B algorithm, where
-  non-negativity of the loadings is achieved by enforcing a
-  zero lower bound. Sparsity is achieved by a subsequent
-  soft thresholding of the rotation matrix.
+  maximization step is equivalent to minimizing the
+  objective function
+
+  \deqn{\left\Vert
+  \mathbf{X}-\mathbf{Y}\mathbf{W}^{\top}\right\Vert
+  _{F}^{2}+\gamma\left\Vert
+  \mathbf{W}^{\top}\mathbf{W}-\mathbf{I}\right\Vert
+  _{F}^{2}}{norm(X - Y*W^t, "F")^2 + gamma*norm(W^tW - I,
+  "F")^2}
+
+  w.r.t. the rotation matrix W, where \code{gamma} is the
+  Lagrange parameter associated with the ortho-normality
+  penalty on W. Non-negativity of the loadings is achieved
+  by enforcing a zero lower bound in the L-BFGS-B algorithm
+  used for the minimization of the objective, and sparsity
+  is achieved by a subsequent soft thresholding of the
+  rotation matrix.
 }
 \examples{
 library(MASS)
 
-# Sparse cumulative PCA with three components and 25 non-zero loadings
-# of the rotation matrix. The high orthonormality penalty is necessary to
-# avoid co-linear principal axes.
-nscumcomp(Boston, ncomp = 3, k = 15, gamma = 1e6)  
+# Regular PCA, with tolerance set to return three PCs
+prc <- prcomp(Boston, tol = 0.4, scale. = TRUE)
+prc
 
-# Non-negative sparse cumulative PCA with unequal weighting of samples
-nscumcomp(Boston, ncomp = 5, k = 15, nneg = TRUE, omega = 1:nrow(Boston), 
-          gamma = 1e8)  
+# Sparse cumulative PCA with three components and 15 non-zero loadings
+# of the rotation matrix. The orthonormality penalty is set to a value which
+# avoids co-linear principal axes.
+# Note that for this example (as in general), the non-zero loadings are not 
+# distributed uniformly over the components.
+scc <- nscumcomp(Boston, ncomp = 3, k = 15, gamma = 1e10, scale. = TRUE)  
+scc
+t(scc$rotation)\%*\%scc$rotation  # quasi-orthogonality of the PAs
+
+# Non-negative sparse cumulative PCA
+nscc <- nscumcomp(Boston, ncomp = 3, nneg = TRUE, k = 20, gamma = 1e4, 
+                  scale. = TRUE)  
+nscc
+t(nscc$rotation)\%*\%nscc$rotation  # quasi-orthogonality of the PAs
+sum(abs(nscc$rotation) > 0 )  # k is only an upper bound
+
+c(sum(prc$sdev), sum(scc$sdev), sum(nscc$sdev))
 }
 \seealso{
   \code{\link{nsprcomp}}, \code{\link{prcomp}},

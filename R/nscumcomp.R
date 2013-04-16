@@ -24,13 +24,17 @@
 #' Furthermore, only quasi-orthogonality is enforced between PAs, which is especially
 #' useful if the PAs are constrained to lie in the non-negative orthant.
 #' 
-#' The results are returned as an object of class \code{nsprcomp}, which inherits from
-#' \code{prcomp}.
-#' 
 #' \code{nscumcomp} computes all PCs jointly using expectation-maximization (EM)
-#' iterations. The maximization step employs the L-BFGS-B algorithm, 
-#' where non-negativity of the loadings is achieved by enforcing a zero lower bound.
-#' Sparsity is achieved by a subsequent soft thresholding of the rotation matrix.
+#' iterations. The maximization step is equivalent to minimizing the objective function
+#' 
+#' \deqn{\left\Vert \mathbf{X}-\mathbf{Y}\mathbf{W}^{\top}\right\Vert _{F}^{2}+\gamma\left\Vert \mathbf{W}^{\top}\mathbf{W}-\mathbf{I}\right\Vert _{F}^{2}}{norm(X - Y*W^t, "F")^2 + gamma*norm(W^tW - I, "F")^2}
+#'  
+#' w.r.t. the rotation matrix W, where \code{gamma} is the Lagrange parameter 
+#' associated with the ortho-normality 
+#' penalty on W. Non-negativity of the loadings is achieved by enforcing a zero lower 
+#' bound in the L-BFGS-B algorithm used for the minimization of the objective, 
+#' and sparsity is achieved by a subsequent soft 
+#' thresholding of the rotation matrix.
 #' 
 #' @export nscumcomp
 #' @param x a numeric matrix or data frame which provides the data 
@@ -52,6 +56,9 @@ nscumcomp <- function (x, ...) UseMethod("nscumcomp")
 #'   loadings of the rotation matrix.
 #' @param nneg a logical value indicating whether the principal axes should be
 #'   constrained to the non-negative orthant.
+#' @param gamma a positive number indicating the penalty on the divergence from 
+#'   orthonormality of the rotation matrix. A too small value for \code{gamma}
+#'   results in co-linear PAs and produces an error.
 #' @param center a logical value indicating whether the empirical mean of \code{x}
 #'   should be subtracted. Alternately, a vector of
 #'   length equal the number of columns of \code{x} can be supplied.
@@ -81,6 +88,8 @@ nscumcomp <- function (x, ...) UseMethod("nscumcomp")
 #'   if requested). For the formula method, \code{\link{napredict}()} is applied 
 #'   to handle the treatment of values omitted by the \code{na.action}.}
 #' \item{center, scale}{the centering and scaling used, or \code{FALSE}.}
+#' 
+#' The components are returned in order of decreasing variance for convenience.
 #'   
 #' @seealso \code{\link{nsprcomp}}, \code{\link{prcomp}}, \code{\link{scale}}
 #' 
@@ -124,10 +133,19 @@ nscumcomp.default <-
         }
     }
     
+    # sort components according to variance
+    sdev = apply(x.pc.opt, 2, sd)
+    if (length(sdev) > 1) {
+        srt = sort(sdev, decreasing = TRUE, index.return = TRUE)
+        sdev = srt$x
+        W.opt <- W.opt[, srt$ix]
+        x.pc <- x.pc[, srt$ix]    
+    }
+    
     dimnames(W.opt) <-
         list(colnames(x), paste0("PC", seq_len(ncol(W.opt))))
     
-    r <- list(sdev = apply(x.pc.opt, 2, sd), rotation = W.opt,
+    r <- list(sdev = sdev, rotation = W.opt,
               center = if(is.null(cen)) FALSE else cen,
               scale = if(is.null(sc)) FALSE else sc)
     if (retx) r$x <- x.pc

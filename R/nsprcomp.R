@@ -16,7 +16,7 @@
 
 #' Non-Negative Sparse PCA
 #' 
-#' Performs a constrained principal component analysis on the given data matrix,
+#' Performs a constrained principal component analysis,
 #' where non-negativity and/or sparsity constraints are enforced on the principal axes.
 #' The results are returned as an object of class \code{nsprcomp}, which inherits from
 #' \code{prcomp}.
