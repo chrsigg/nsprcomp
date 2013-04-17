@@ -1,5 +1,5 @@
 Package: nsprcomp
-Authors@R: c( person("Sigg", "Christian", email =
+Authors@R: c( person("Christian", "Sigg", email =
     "christian@sigg-iten.ch", role = c("aut", "cre")), person("R
     Core team", role = "aut"))
 Version: 0.2
@@ -34,7 +34,3 @@ Collate:
     'nsprcomp-package.r'
     'nsprcomp.R'
     'nscumcomp.R'
-Packaged: 2013-04-11 06:34:10 UTC; chrsigg
-Author: Sigg Christian [aut, cre],
-    R Core team [aut]
-Maintainer: Sigg Christian <christian@sigg-iten.ch>
