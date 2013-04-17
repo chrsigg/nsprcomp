@@ -23,6 +23,7 @@ Description: This package implements two methods for performing a
     from the 'stats' package (plus some extra parameters), and both
     return the result of the analysis as an object of class
     'nsprcomp', which inherits from 'prcomp'.
+URL: http://sigg-iten.ch/research/
 License: GPL (>=2)
 Imports:
     stats
