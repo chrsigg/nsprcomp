@@ -77,6 +77,8 @@ nscumcomp <- function (x, ...) UseMethod("nscumcomp")
 #'   used as the stopping criterion for the EM iterations. If the relative change
 #'   of every PC magnitude changes less than \code{em.tol} between iterations, 
 #'   the EM procedure is asssumed to have converged to a local optimum.
+#' @param verbosity an integer specifying the verbosity level. Greater values
+#'   result in more output, the default is to be quiet.
 #' 
 #' @return \code{nscumcomp} returns a list with class \code{(nsprcomp, prcomp)}
 #' containing the following elements:
@@ -99,7 +101,8 @@ nscumcomp.default <-
              omega = rep(1, nrow(x)),
              k = length(x), nneg = FALSE, gamma,
              center = TRUE, scale. = FALSE,
-             nrestart = 5, em.tol = 1e-3, ...) 
+             nrestart = 5, em.tol = 1e-2, 
+             verbosity = 0, ...) 
 {        
     if (missing(ncomp))
         stop("'ncomp' needs to be specified.")
@@ -121,7 +124,7 @@ nscumcomp.default <-
     cumsdev.opt <- 0
     cumsdev <- numeric(nrestart)
     for (rr in seq(nrestart)) {        
-        W <- emcumca(x, omega, ncomp, k, nneg, gamma, em.tol)
+        W <- emcumca(x, omega, ncomp, k, nneg, gamma, em.tol, verbosity)
         
         # keep solution with maximum cumulative variance
         x.pc <- x%*%W
@@ -130,6 +133,10 @@ nscumcomp.default <-
             x.pc.opt <- x.pc
             cumsdev.opt <- cumsdev[rr]
             W.opt <- W
+        }
+        if (verbosity > 0) {
+            print(paste("maximal cum. variance is ", format(cumsdev.opt, digits = 4),
+                        " at random restart ", rr-1, sep = ""))
         }
     }
     
@@ -153,7 +160,7 @@ nscumcomp.default <-
     return(r)
 }
 
-emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol) {
+emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol, verbosity = 0) {
     d <- ncol(X); n <- nrow(X)
     
     W <- matrix(rnorm(d*ncomp), d)
@@ -175,6 +182,14 @@ emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol) {
             break
         }
         sdev.old <- sdev
+        
+        if (verbosity > 1) {
+            print(paste("cum. variance: ", format(sum(sdev), digits = 4),
+                        " - ortho penalty: ", format(sum((t(W)%*%W - diag(ncomp))^2), digits = 4),
+                        sep = ""
+                        )
+                  )
+        }
         
         # objective function
         if (isTRUE(all.equal(omega, rep(1, nrow(X))))) {
@@ -210,9 +225,13 @@ emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol) {
         }
         
         control <- list()
-        control$trace <- 0
+        if (verbosity > 2) {
+            control$trace <- 3    
+        } else {
+            control$trace <- 0
+        }
         W.star <- optim(W, fn, gr, method = "L-BFGS-B",
-                        lower = ifelse(nneg, 0, -Inf), control = control)$par
+                        lower = if (nneg) 0 else -Inf, control = control)$par
         
         if (k < d*ncomp) {
             

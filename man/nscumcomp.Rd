@@ -9,7 +9,7 @@
   \method{nscumcomp}{default} (x, retx = TRUE, ncomp,
     omega = rep(1, nrow(x)), k = length(x), nneg = FALSE,
     gamma, center = TRUE, scale. = FALSE, nrestart = 5,
-    em.tol = 0.001, ...)
+    em.tol = 0.01, verbosity = 0, ...)
 
   \method{nscumcomp}{formula} (formula, data = NULL,
     subset, na.action, ...)
@@ -70,6 +70,10 @@
   of every PC magnitude changes less than \code{em.tol}
   between iterations, the EM procedure is asssumed to have
   converged to a local optimum.}
+
+  \item{verbosity}{an integer specifying the verbosity
+  level. Greater values result in more output, the default
+  is to be quiet.}
 
   \item{formula}{a formula with no response variable,
   referring only to numeric variables.}

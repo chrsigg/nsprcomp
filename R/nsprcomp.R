@@ -93,6 +93,8 @@ nsprcomp <- function (x, ...) UseMethod("nsprcomp")
 #'   the EM procedure is asssumed to have converged to a local optimum.
 #' @param rety a logical value indicating whether the deflated data matrix
 #'   should be returned.
+#' @param verbosity an integer specifying the verbosity level. Greater values
+#'   result in more output, the default is to be quiet.
 #' 
 #' @return \code{nsprcomp} returns a list with class \code{(nsprcomp, prcomp)}
 #' containing the following elements:
@@ -123,7 +125,8 @@ nsprcomp.default <-
     function(x, retx = TRUE, ncomp = NULL, omega = rep(1, nrow(x)),
              k = ncol(x), nneg = FALSE, deflation = "ortho",
              center = TRUE, scale. = FALSE, tol = NULL,
-             nrestart = 5, em.tol = 1e-3, rety = FALSE, ...) 
+             nrestart = 5, em.tol = 1e-3, rety = FALSE, 
+             verbosity = 0, ...) 
 {        
     d <- ncol(x); n <- nrow(x)
     if (is.null(ncomp)) {
@@ -172,6 +175,11 @@ nsprcomp.default <-
                 x.pc.opt <- x.pc
                 sdev.opt <- sdev.cur
                 w.opt <- w
+            }
+            if (verbosity > 0) {
+                print(paste("component ", cc, ": ",
+                            "maximal variance is ", format(sdev.opt, digits = 4),
+                            " at random restart ", rr-1, sep = ""))
             }
         }
         X.pc[ ,cc] <- x.pc.opt

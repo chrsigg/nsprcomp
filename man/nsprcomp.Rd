@@ -10,7 +10,7 @@
     omega = rep(1, nrow(x)), k = ncol(x), nneg = FALSE,
     deflation = "ortho", center = TRUE, scale. = FALSE,
     tol = NULL, nrestart = 5, em.tol = 0.001, rety = FALSE,
-    ...)
+    verbosity = 0, ...)
 
   \method{nsprcomp}{formula} (formula, data = NULL, subset,
     na.action, ...)
@@ -91,6 +91,10 @@
 
   \item{rety}{a logical value indicating whether the
   deflated data matrix should be returned.}
+
+  \item{verbosity}{an integer specifying the verbosity
+  level. Greater values result in more output, the default
+  is to be quiet.}
 
   \item{formula}{a formula with no response variable,
   referring only to numeric variables.}
