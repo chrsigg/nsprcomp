@@ -28,9 +28,12 @@ additively. Non-negative solutions often show some degree of sparsity
 already, but a combination of both constraints enables precise control
 over the cardinality of the PAs.
 
-This package implements two non-negative sparse PCA algorithms which
-are rooted in _expectation-maximization_ (EM) for a probabilistic
-generative model of PCA (Sigg and Buhmann, 2008). 
+This package implements two non-negative and/or sparse PCA algorithms
+which are rooted in _expectation-maximization_ (EM) for a
+probabilistic generative model of PCA (Sigg and Buhmann, 2008). A
+small example from the domain of portfolio optimization which
+demonstrates the usage is provided in [this blog
+entry](http://sigg-iten.ch/learningbits/2013/05/27/nsprcomp-is-on-cran/).
 
 nsprcomp Algorithm
 -------------------------
