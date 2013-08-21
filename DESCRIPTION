@@ -26,11 +26,11 @@ Description: This package implements two methods for performing a
 URL: http://sigg-iten.ch/research/
 License: GPL (>=2)
 Imports:
+    MASS,
     stats
 Suggests:
     testthat,
-    roxygen2,
-    MASS
+    roxygen2
 Collate:
     'nsprcomp-package.R'
     'nsprcomp.R'

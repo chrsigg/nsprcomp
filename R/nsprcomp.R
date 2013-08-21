@@ -123,10 +123,9 @@ nsprcomp <- function (x, ...) UseMethod("nsprcomp")
 #' @example inst/nsprcomp_examples.R
 nsprcomp.default <-
     function(x, retx = TRUE, ncomp = NULL, omega = rep(1, nrow(x)),
-             k = ncol(x), nneg = FALSE, deflation = "ortho",
+             k = ncol(x), nneg = FALSE, 
              center = TRUE, scale. = FALSE, tol = NULL,
-             nrestart = 5, em.tol = 1e-3, rety = FALSE, 
-             verbosity = 0, ...) 
+             nrestart = 5, em.tol = 1e-3, rety = FALSE, verbosity = 0, ...) 
 {        
     d <- ncol(x); n <- nrow(x)
     if (is.null(ncomp)) {
@@ -150,29 +149,26 @@ nsprcomp.default <-
     if(any(sc == 0))
         stop("cannot rescale a constant/zero column to unit variance")
     
-    X.pc <- matrix(0, n, nc)  # data matrix projected into the PC subspace
-    sdev <- rep(0, nc)  # standard deviations of PCs
+    sdev <- rep(0, nc)  # additional explained standard deviations
     W <- matrix(0, d, nc)  # principal axes as columns
-    if (deflation == "ortho") {
-        Q <- matrix(0, d, nc)  # orthogonalized principal axes as columns
-    }
+    Q <- matrix(0, d, nc)  # orthogonalized principal axes as columns
     Y <- x  # data matrix, to be deflated if nc > 1
     for (cc in seq(nc)) {
         sdev.opt <- -Inf
         for (rr in seq(nrestart)) {
-            w <- empca(Y, omega, k[cc], nneg, em.tol)
+            res <- empca(Y, Q[ , seq_len(cc-1), drop=FALSE], omega, k[cc], nneg, em.tol)
                    
             # variational renormalization
-            idx <- abs(w) > 0
+            idx <- abs(res$w) > 0
             w <- rep(0, d)
-            w.sub <- empca(as.matrix(Y[ ,idx]), omega, sum(idx), nneg, em.tol)
-            w[idx] <- w.sub                
+            res_sub <- empca(Y[ , idx, drop=FALSE], 
+                             Q[idx, seq_len(cc-1), drop=FALSE], 
+                             omega, sum(idx), nneg, em.tol)
+            w[idx] <- res_sub$w                
             
-            # keep solution with maximum variance
-            x.pc <- x%*%w
-            sdev.cur <- sd(as.vector(x.pc))
+            # keep solution with maximum additional explained variance
+            sdev.cur <- res_sub$sdev
             if (sdev.cur > sdev.opt) {
-                x.pc.opt <- x.pc
                 sdev.opt <- sdev.cur
                 w.opt <- w
             }
@@ -182,62 +178,47 @@ nsprcomp.default <-
                             " at random restart ", rr-1, sep = ""))
             }
         }
-        X.pc[ ,cc] <- x.pc.opt
         sdev[cc] <- sdev.opt
         w <- w.opt  
         W[ ,cc] <- w
         
-        if (deflation == "ortho") {
-            if (cc > 1) {
-                q <- w - Q[ ,1:(cc-1)]%*%(t(Q[ ,1:(cc-1)])%*%w) 
-            } else {
-                q <- w
-            }
-            q <- q/as.vector(sqrt(t(q)%*%q))
-            Y <- Y - Y%*%q%*%t(q)   
-            Q[ ,cc] <- q
-        } 
-        else if (deflation == "Schur") {
-            Yw <- Y%*%w
-            Y <- Y - Yw%*%t(Yw)%*%Y/as.vector(t(Yw)%*%Yw)
-        }
-        else if (deflation == "remove") {
-            Y[ ,abs(w) > 0] <- 0
+        if (cc > 1) {
+            q <- w - Q[ , 1:(cc-1)]%*%(t(Q[ , 1:(cc-1)])%*%w) 
         } else {
-            stop("deflation parameter must be one of 'ortho', 'Schur' or 'remove'")
+            q <- w
         }
+        q <- q/as.vector(sqrt(t(q)%*%q))
+        Y <- Y - Y%*%q%*%t(q)   
+        Q[ , cc] <- q
         
         if (!is.null(tol) && sdev[cc] < tol*sdev[1]) {
-            X.pc <- X.pc[ ,1:(cc-1)]
             sdev <- sdev[1:(cc-1)]
-            W <- W[ ,1:(cc-1)]
+            W <- W[ , 1:(cc-1), drop=FALSE]
             break
         } else if (cc < nc && all(abs(Y) < 1e-14)) {  # data matrix fully deflated
             if (!is.null(ncomp)) {
                 warning("data matrix is fully deflated, less than 'ncomp' components could be computed")            
             }
-            X.pc <- X.pc[ ,1:cc]
             sdev <- sdev[1:cc]
-            W <- W[ ,1:cc]
+            W <- W[ , 1:cc, drop=FALSE]
             break
         }
     }
     
-    W <- as.matrix(W)
     dimnames(W) <-
         list(colnames(x), paste0("PC", seq_len(ncol(W))))
-    
-    r <- list(sdev = sdev, rotation = W,
+        r <- list(sdev = sdev, rotation = W,
               center = if(is.null(cen)) FALSE else cen,
               scale = if(is.null(sc)) FALSE else sc)
-    if (retx) r$x <- X.pc
+    if (retx) r$x <- x %*% W
     if (rety) r$y <- Y
     class(r) <- c("nsprcomp", "prcomp")
     return(r)
 }
 
-empca <- function(X, omega, k, nneg, em.tol) {
-    d <- ncol(X); n <- nrow(X)
+empca <- function(Y, Q, omega, k, nneg, em.tol) {
+    
+    d <- ncol(Y); n <- nrow(Y)
     
     w <- rnorm(d); 
     if (nneg) {
@@ -245,17 +226,17 @@ empca <- function(X, omega, k, nneg, em.tol) {
     }
     w <- w/sqrt(t(w)%*%w)     
     
-    sdev.old <- 0
+    sdev.old <- -Inf
     repeat {   
-        y <- X%*%w
+        z <- Y%*%w
         
-        sdev <- sd(as.vector(y))
+        sdev <- sd(as.vector(z))
         if (abs(sdev - sdev.old)/sdev < em.tol) {
             break
         }
         sdev.old <- sdev
 
-        w.star <- as.vector(t(X)%*%(omega*y)/as.vector(t(y)%*%(omega*y)))
+        w.star <- as.vector(t(Y)%*%(omega*z)/as.vector(t(z)%*%(omega*z)))
         if (nneg) {
             w.star[w.star < 0] <- 0
         }
@@ -267,9 +248,16 @@ empca <- function(X, omega, k, nneg, em.tol) {
             w <- w.star
         }
 
-        w <- w/sqrt(t(w)%*%w)
+        if (ncol(Q) > 0) {
+            wo <- t(Q) %*% w
+            w <- w/sqrt(t(w)%*%w - t(wo)%*%wo)    
+        } else {
+            w <- w/sqrt(t(w)%*%w)     
+        }
     }
-    return(w)
+    
+    w <- w/sqrt(t(w)%*%w)     
+    return(list(w=w, sdev=sdev))
 }
 
 #' @method nsprcomp formula

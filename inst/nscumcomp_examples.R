@@ -1,13 +1,11 @@
-library(MASS)
-
 set.seed(1)
 
 # Regular PCA, with tolerance set to return five PCs
 prc <- prcomp(Boston, tol = 0.35, scale. = TRUE)
 prc
 
-# Sparse cumulative PCA with five components and 30 non-zero loadings
-# of the rotation matrix. The orthonormality penalty is set to a value which
+# Sparse cumulative PCA with five components and 30 non-zero loadings. 
+# The orthonormality penalty is set to a value which
 # avoids co-linear principal axes. Note that for this example (as in general), 
 # the non-zero loadings are not distributed uniformly over the components.
 scc <- nscumcomp(Boston, ncomp = 5, k = 30, gamma = 1e11, scale. = TRUE)  

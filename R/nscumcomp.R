@@ -27,14 +27,16 @@
 #' \code{nscumcomp} computes all PCs jointly using expectation-maximization (EM)
 #' iterations. The maximization step is equivalent to minimizing the objective function
 #' 
-#' \deqn{\left\Vert \mathbf{X}-\mathbf{Y}\mathbf{W}^{\top}\right\Vert _{F}^{2}+\gamma\left\Vert \mathbf{W}^{\top}\mathbf{W}-\mathbf{I}\right\Vert _{F}^{2}}{norm(X - Y*W^t, "F")^2 + gamma*norm(W^tW - I, "F")^2}
+#' \deqn{\left\Vert \mathbf{X}-\mathbf{Z}\mathbf{W}^{\top}\right\Vert _{F}^{2}+\gamma\left\Vert \mathbf{W}^{\top}\mathbf{W}-\mathbf{I}\right\Vert _{F}^{2}}{norm(X - Z*W^t, "F")^2 + gamma*norm(W^tW - I, "F")^2}
 #'  
-#' w.r.t. the rotation matrix W, where \code{gamma} is the Lagrange parameter 
+#' w.r.t. the pseudo-rotation matrix W, where 
+#' \eqn{\mathbf{Z}=\mathbf{X}\mathbf{W}\left(\mathbf{W}^\top\mathbf{W}\right)^{-1}}{Z=X*W*(W^tW)^-1} 
+#' are the modified scores and \code{gamma} is the Lagrange parameter 
 #' associated with the ortho-normality 
 #' penalty on W. Non-negativity of the loadings is achieved by enforcing a zero lower 
 #' bound in the L-BFGS-B algorithm used for the minimization of the objective, 
 #' and sparsity is achieved by a subsequent soft 
-#' thresholding of the rotation matrix.
+#' thresholding of W.
 #' 
 #' @export nscumcomp
 #' @param x a numeric matrix or data frame which provides the data 
@@ -114,48 +116,42 @@ nscumcomp.default <-
         k = d*ncomp
     }
     
-    x <- as.matrix(x)
-    x <- scale(x, center = center, scale = scale.)
-    cen <- attr(x, "scaled:center")
-    sc <- attr(x, "scaled:scale")
+    X <- as.matrix(x)
+    X <- scale(X, center = center, scale = scale.)
+    cen <- attr(X, "scaled:center")
+    sc <- attr(X, "scaled:scale")
     if(any(sc == 0))
         stop("cannot rescale a constant/zero column to unit variance")
     
-    cumsdev.opt <- 0
-    cumsdev <- numeric(nrestart)
+    sdev.opt <- -Inf
     for (rr in seq(nrestart)) {        
-        W <- emcumca(x, omega, ncomp, k, nneg, gamma, em.tol, verbosity)
+        res <- emcumca(X, omega, ncomp, k, nneg, gamma, em.tol, verbosity)
         
         # keep solution with maximum cumulative variance
-        x.pc <- x%*%W
-        cumsdev[rr] <- sum(apply(x.pc, 2, sd))
-        if (cumsdev[rr] > cumsdev.opt) {
-            x.pc.opt <- x.pc
-            cumsdev.opt <- cumsdev[rr]
-            W.opt <- W
+        if (sum(res$sdev) > sum(sdev.opt)) {
+            sdev.opt <- res$sdev
+            W.opt <- res$W
         }
         if (verbosity > 0) {
-            print(paste("maximal cum. variance is ", format(cumsdev.opt, digits = 4),
+            print(paste("maximal cum. variance is ", format(sum(sdev.opt), digits = 4),
                         " at random restart ", rr-1, sep = ""))
         }
     }
     
-    # sort components according to variance
-    sdev = apply(x.pc.opt, 2, sd)
-    if (length(sdev) > 1) {
-        srt = sort(sdev, decreasing = TRUE, index.return = TRUE)
-        sdev = srt$x
-        W.opt <- W.opt[, srt$ix]
-        x.pc <- x.pc[, srt$ix]    
+    # sort components according to their variances
+    if (length(sdev.opt) > 1) {
+        srt = sort(sdev.opt, decreasing = TRUE, index.return = TRUE)
+        sdev.opt = srt$x
+        W.opt <- W.opt[, srt$ix, drop=FALSE]
     }
     
     dimnames(W.opt) <-
-        list(colnames(x), paste0("PC", seq_len(ncol(W.opt))))
+        list(colnames(X), paste0("PC", seq_len(ncol(W.opt))))
     
-    r <- list(sdev = sdev, rotation = W.opt,
+    r <- list(sdev = sdev.opt, rotation = W.opt,
               center = if(is.null(cen)) FALSE else cen,
               scale = if(is.null(sc)) FALSE else sc)
-    if (retx) r$x <- x.pc
+    if (retx) r$x <- X %*% W.opt
     class(r) <- c("nsprcomp", "prcomp")
     return(r)
 }
@@ -171,13 +167,13 @@ emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol, verbosity = 0) {
     
     sdev.old <- 0
     repeat {   
-        Y <- tryCatch(X%*%W%*%solve(t(W)%*%W), 
+        Z <- tryCatch(X%*%W%*%solve(t(W)%*%W), 
                  error = function(e) {
                      stop("Co-linear principal axes, try increasing the orthonormality penalty 'gamma'.")
                  }
         )
         
-        sdev <- apply(Y, 2, sd)
+        sdev <- apply(Z, 2, sd)
         if (all(abs(sdev - sdev.old)/sdev < em.tol)) {
             break
         }
@@ -195,32 +191,32 @@ emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol, verbosity = 0) {
         if (isTRUE(all.equal(omega, rep(1, nrow(X))))) {
             fn <- function(W) {
                 dim(W) <- c(d, ncomp)
-                return( sum((X-Y%*%t(W))^2) + gamma*sum((t(W)%*%W - diag(ncomp))^2) )
+                return( sum((X-Z%*%t(W))^2) + gamma*sum((t(W)%*%W - diag(ncomp))^2) )
             }
             
         } else {
             fn <- function(W) {
                 dim(W) <- c(d, ncomp)
-                return( omega%*%rowSums((X-Y%*%t(W))^2) + gamma*sum((t(W)%*%W - diag(ncomp))^2) )
+                return( omega%*%rowSums((X-Z%*%t(W))^2) + gamma*sum((t(W)%*%W - diag(ncomp))^2) )
             }
             
         }
         
         # gradient
         if (isTRUE(all.equal(omega, rep(1, nrow(X))))) {
-            tYY <- t(Y)%*%Y
-            tXY <- t(X)%*%Y
+            tZZ <- t(Z)%*%Z
+            tXZ <- t(X)%*%Z
             gr <- function(W) {
                 dim(W) <- c(d, ncomp)
-                return( 2*(W%*%tYY - tXY) + 4*gamma*(W%*%t(W)%*%W - W) )
+                return( 2*(W%*%tZZ - tXZ) + 4*gamma*(W%*%t(W)%*%W - W) )
             }
         } else {
-            OY <- matrix(rep(omega, ncomp), n)*Y
-            tYOY <- t(Y)%*%OY
-            tXOY <- t(X)%*%OY
+            OZ <- matrix(rep(omega, ncomp), n)*Z
+            tZOZ <- t(Z)%*%OZ
+            tXOZ <- t(X)%*%OZ
             gr <- function(W) {
                 dim(W) <- c(d, ncomp)
-                return( 2*(W%*%tYOY - tXOY) + 4*gamma*(W%*%t(W)%*%W - W) )
+                return( 2*(W%*%tZOZ - tXOZ) + 4*gamma*(W%*%t(W)%*%W - W) )
             }
         }
         
@@ -233,8 +229,7 @@ emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol, verbosity = 0) {
         W.star <- optim(W, fn, gr, method = "L-BFGS-B",
                         lower = if (nneg) 0 else -Inf, control = control)$par
         
-        if (k < d*ncomp) {
-            
+        if (k < d*ncomp) {        
             # soft thresholding
             srt <- sort(abs(W.star), decreasing = TRUE)
             W <- pmax(abs(W.star) - srt[k+1], 0)*sign(W.star)      
@@ -247,7 +242,7 @@ emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol, verbosity = 0) {
             stop("Principal axis is the zero vector, try increasing 'k' or decreasing 'ncomp'.")
         W <- W/t(matrix(rep(norms, d), ncomp))
     }
-    return(W)
+    return(list(W=W, sdev=sdev))
 }
 
 #' @method nscumcomp formula

@@ -36,21 +36,21 @@ test_that("non-negativity", {
     expect_true(all(nscc$rotation >= 0))
 })
 
-test_that("weighted non-negative sparse PCA approximation error", {
+test_that("reconstruction", {
+    set.seed(1)
+    X <- matrix(runif(5*5), 5)
+    nscc <- nscumcomp(X, ncomp = 5, k = 20, nneg = TRUE, gamma = 1)
+    X_hat <- predict(nscc)%*%ginv(nscc$rotation) + matrix(1,5,1) %*% nscc$center
+    
+    expect_true(norm(X - X_hat, type="F") < 1e-3)
+})
+
+test_that("weighted approximation error", {
     set.seed(1)
     X <- scale(matrix(runif(5*5), 5))
+    nscc <- nscumcomp(X, omega = c(1,1,1,1,5), ncomp = 3, k = 15, nneg = TRUE, gamma = 1)
+    X_hat <- predict(nscc)%*%ginv(nscc$rotation)
     
-    nscc <- nscumcomp(X, omega = c(1,10,1,1,1), ncomp = 1, k = 3, gamma = 1,
-                      nneg = TRUE)
-    W <- nscc$rotation
-    X_hat <- X%*%W%*%solve(t(W)%*%W)%*%t(W)
     nrm <- rowSums((X - X_hat)^2)
-    expect_true(which(nrm == min(nrm)) == 2)
-    
-    nscc <- nscumcomp(X, omega = c(1,1,1,1,5), ncomp = 2, k = 6, gamma = 1,
-                      nneg = TRUE)
-    W <- nscc$rotation
-    X_hat <- X%*%W%*%solve(t(W)%*%W)%*%t(W)
-    nrm <- rowSums((X - X_hat)^2)
-    expect_true(which(nrm == min(nrm)) == 5)
+    expect_true(which.min(nrm) == 5)
 })

@@ -1,5 +1,6 @@
 export(nscumcomp)
 export(nsprcomp)
+import(MASS)
 import(stats)
 S3method(nscumcomp,default)
 S3method(nscumcomp,formula)

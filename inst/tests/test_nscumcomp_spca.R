@@ -32,20 +32,21 @@ test_that("cardinality", {
     expect_equal(card, 10)
 })
 
-test_that("weighted sparse PCA approximation error", {
+test_that("reconstruction", {
     set.seed(1)
-    X <- scale(matrix(runif(5*5), 5))
+    X <- matrix(runif(5*5), 5)
+    nscc <- nscumcomp(X, ncomp = 5, k = 20, gamma = 1)
+    X_hat <- predict(nscc)%*%ginv(nscc$rotation) + matrix(1,5,1) %*% nscc$center
     
-    nscc <- nscumcomp(X, omega = c(1,1,1,1,5), ncomp = 1, k = 3, gamma = 1)
-    W <- nscc$rotation
-    X_hat <- X%*%W%*%solve(t(W)%*%W)%*%t(W)
-    nrm <- rowSums((X - X_hat)^2)
-    expect_true(which(nrm == min(nrm)) == 5)
-    
-    nscc <- nscumcomp(X, omega = c(1,1,1,1,5), ncomp = 2, k = 6, gamma = 1)
-    W <- nscc$rotation
-    X_hat <- X%*%W%*%solve(t(W)%*%W)%*%t(W)
-    nrm <- rowSums((X - X_hat)^2)
-    expect_true(which(nrm == min(nrm)) == 5)
+    expect_true(norm(X - X_hat, type="F") < 1e-3)
 })
 
+test_that("weighted approximation error", {
+    set.seed(1)
+    X <- scale(matrix(runif(5*5), 5))
+    nscc <- nscumcomp(X, omega = c(1,1,1,1,5), ncomp = 3, k = 15, gamma = 1)
+    X_hat <- predict(nscc)%*%ginv(nscc$rotation)
+    
+    nrm <- rowSums((X - X_hat)^2)
+    expect_true(which.min(nrm) == 5)
+})

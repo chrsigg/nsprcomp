@@ -41,21 +41,7 @@ test_that("deflation", {
     n <- 100
     X = matrix(runif(n*d), n)
     
-    nspc <- nsprcomp(X, k = k, rety = TRUE, deflation = "ortho")
-    W <- nspc$rotation
-    Y <- nspc$y
-    for (cc in seq(length(nspc$sdev))) {
-        expect_true(sum(abs(Y%*%W[ ,cc])) < 1e-10)
-    }
-    
-    nspc <- nsprcomp(X, k = k, rety = TRUE, deflation = "Schur")
-    W <- nspc$rotation
-    Y <- nspc$y
-    for (cc in seq(length(nspc$sdev))) {
-        expect_true(sum(abs(Y%*%W[ ,cc])) < 1e-10)
-    }
-    
-    nspc <- nsprcomp(X, k = k, rety = TRUE, deflation = "remove")
+    nspc <- nsprcomp(X, k = k, rety = TRUE)
     W <- nspc$rotation
     Y <- nspc$y
     for (cc in seq(length(nspc$sdev))) {
@@ -63,13 +49,21 @@ test_that("deflation", {
     }
 })
 
-test_that("weighted sparse PCA approximation error", {
+test_that("reconstruction", {
+    set.seed(1)
+    X <- matrix(runif(5*5), 5)
+    nspc <- nsprcomp(X, k = 3)
+    X_hat <- predict(nspc)%*%ginv(nspc$rotation) + matrix(1,5,1) %*% nspc$center
+    
+    expect_true(norm(X - X_hat, type="F") < 1e-3)
+})
+
+test_that("weighted approximation error", {
     set.seed(1)
     X <- scale(matrix(runif(5*5), 5))
     nspc <- nsprcomp(X, omega = c(1,1,1,1,5), ncomp = 2, k = 3)
-    X_hat <- nspc$x%*%t(nspc$rotation)
+    X_hat <- predict(nspc)%*%ginv(nspc$rotation)
     
     nrm <- rowSums((X - X_hat)^2)
-    expect_true(which(nrm == min(nrm)) == 5)
+    expect_true(which.min(nrm) == 5)
 })
-

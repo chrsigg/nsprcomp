@@ -131,31 +131,30 @@
   objective function
 
   \deqn{\left\Vert
-  \mathbf{X}-\mathbf{Y}\mathbf{W}^{\top}\right\Vert
+  \mathbf{X}-\mathbf{Z}\mathbf{W}^{\top}\right\Vert
   _{F}^{2}+\gamma\left\Vert
   \mathbf{W}^{\top}\mathbf{W}-\mathbf{I}\right\Vert
-  _{F}^{2}}{norm(X - Y*W^t, "F")^2 + gamma*norm(W^tW - I,
+  _{F}^{2}}{norm(X - Z*W^t, "F")^2 + gamma*norm(W^tW - I,
   "F")^2}
 
-  w.r.t. the rotation matrix W, where \code{gamma} is the
-  Lagrange parameter associated with the ortho-normality
-  penalty on W. Non-negativity of the loadings is achieved
-  by enforcing a zero lower bound in the L-BFGS-B algorithm
+  w.r.t. the pseudo-rotation matrix W, where
+  \eqn{\mathbf{Z}=\mathbf{X}\mathbf{W}\left(\mathbf{W}^\top\mathbf{W}\right)^{-1}}{Z=X*W*(W^tW)^-1}
+  are the modified scores and \code{gamma} is the Lagrange
+  parameter associated with the ortho-normality penalty on
+  W. Non-negativity of the loadings is achieved by
+  enforcing a zero lower bound in the L-BFGS-B algorithm
   used for the minimization of the objective, and sparsity
-  is achieved by a subsequent soft thresholding of the
-  rotation matrix.
+  is achieved by a subsequent soft thresholding of W.
 }
 \examples{
-library(MASS)
-
 set.seed(1)
 
 # Regular PCA, with tolerance set to return five PCs
 prc <- prcomp(Boston, tol = 0.35, scale. = TRUE)
 prc
 
-# Sparse cumulative PCA with five components and 30 non-zero loadings
-# of the rotation matrix. The orthonormality penalty is set to a value which
+# Sparse cumulative PCA with five components and 30 non-zero loadings. 
+# The orthonormality penalty is set to a value which
 # avoids co-linear principal axes. Note that for this example (as in general), 
 # the non-zero loadings are not distributed uniformly over the components.
 scc <- nscumcomp(Boston, ncomp = 5, k = 30, gamma = 1e11, scale. = TRUE)  

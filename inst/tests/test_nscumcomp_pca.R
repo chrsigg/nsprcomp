@@ -29,6 +29,25 @@ test_that("Equivalence of first PC", {
     expect_true(sdev_nrm < 1e-3)
 })
 
+test_that("reconstruction", {
+    set.seed(1)
+    X <- matrix(runif(5*5), 5)
+    nscc <- nscumcomp(X, ncomp = 5, gamma = 1)
+    X_hat <- predict(nscc)%*%ginv(nscc$rotation) + matrix(1,5,1) %*% nscc$center
+    
+    expect_true(norm(X - X_hat, type="F") < 1e-3)
+})
+
+test_that("weighted approximation error", {
+    set.seed(1)
+    X <- scale(matrix(runif(5*5), 5))
+    nscc <- nscumcomp(X, omega = c(1,1,1,1,5), ncomp = 3, gamma = 1)
+    X_hat <- predict(nscc)%*%ginv(nscc$rotation)
+    
+    nrm <- rowSums((X - X_hat)^2)
+    expect_true(which.min(nrm) == 5)
+})
+
 test_that("weighted PCA equivalence to nsprcomp", {
     set.seed(1)
     X <- matrix(runif(20*10), 20)
