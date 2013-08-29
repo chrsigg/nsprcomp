@@ -20,4 +20,4 @@ nscc
 t(nscc$rotation)%*%nscc$rotation  # quasi-orthogonality of the PAs
 sum(abs(nscc$rotation) > 0 )  # k is only an upper bound
 
-sapply(list(prc$sdev, scc$sdev, nscc$sdev), sum)  # cumulative variances
+sapply(list(prc$sdev, scc$sdev, nscc$sdev), cumsum)  # cumulative variances

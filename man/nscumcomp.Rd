@@ -9,7 +9,7 @@
   \method{nscumcomp}{default} (x, retx = TRUE, ncomp,
     omega = rep(1, nrow(x)), k = length(x), nneg = FALSE,
     gamma, center = TRUE, scale. = FALSE, nrestart = 5,
-    em.tol = 0.01, verbosity = 0, ...)
+    em.tol = 0.001, em.maxiter = 20, verbosity = 0, ...)
 
   \method{nscumcomp}{formula} (formula, data = NULL,
     subset, na.action, ...)
@@ -169,7 +169,7 @@ nscc
 t(nscc$rotation)\%*\%nscc$rotation  # quasi-orthogonality of the PAs
 sum(abs(nscc$rotation) > 0 )  # k is only an upper bound
 
-sapply(list(prc$sdev, scc$sdev, nscc$sdev), sum)  # cumulative variances
+sapply(list(prc$sdev, scc$sdev, nscc$sdev), cumsum)  # cumulative variances
 }
 \seealso{
   \code{\link{nsprcomp}}, \code{\link{prcomp}},

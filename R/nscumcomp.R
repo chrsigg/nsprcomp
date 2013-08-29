@@ -103,7 +103,7 @@ nscumcomp.default <-
              omega = rep(1, nrow(x)),
              k = length(x), nneg = FALSE, gamma,
              center = TRUE, scale. = FALSE,
-             nrestart = 5, em.tol = 1e-2, 
+             nrestart = 5, em.tol = 1e-3, em.maxiter = 20,
              verbosity = 0, ...) 
 {        
     if (missing(ncomp))
@@ -122,33 +122,40 @@ nscumcomp.default <-
     sc <- attr(X, "scaled:scale")
     if(any(sc == 0))
         stop("cannot rescale a constant/zero column to unit variance")
-    
-    sdev.opt <- -Inf
+    obj_opt <- Inf
     for (rr in seq(nrestart)) {        
-        res <- emcumca(X, omega, ncomp, k, nneg, gamma, em.tol, verbosity)
+        res <- emcumca(X, omega, ncomp, k, nneg, gamma, NULL, em.tol, 
+                       em.maxiter, verbosity)
         
-        # keep solution with maximum cumulative variance
-        if (sum(res$sdev) > sum(sdev.opt)) {
-            sdev.opt <- res$sdev
+        # variational renormalization
+        S <- abs(res$W) > 0  # support of W
+        if (any(!S))
+            res <- emcumca(X, omega, ncomp, k, nneg, gamma, S, em.tol, 
+                           em.maxiter, verbosity)
+        
+        # keep solution with minimum objective
+        if (res$obj < obj_opt) {
+            obj_opt <- res$obj
             W.opt <- res$W
         }
         if (verbosity > 0) {
-            print(paste("maximal cum. variance is ", format(sum(sdev.opt), digits = 4),
+            print(paste("minimum objective is ", format(obj_opt, digits = 4),
                         " at random restart ", rr-1, sep = ""))
         }
     }
     
-    # sort components according to their variances
-    if (length(sdev.opt) > 1) {
-        srt = sort(sdev.opt, decreasing = TRUE, index.return = TRUE)
-        sdev.opt = srt$x
+    # sort components according to their additional variances
+    sdev <- additional_sdev(X, W.opt)
+    if (length(sdev) > 1) {
+        srt = sort(sdev, decreasing = TRUE, index.return = TRUE)
+        sdev = srt$x
         W.opt <- W.opt[, srt$ix, drop=FALSE]
     }
     
     dimnames(W.opt) <-
         list(colnames(X), paste0("PC", seq_len(ncol(W.opt))))
     
-    r <- list(sdev = sdev.opt, rotation = W.opt,
+    r <- list(sdev = sdev, rotation = W.opt,
               center = if(is.null(cen)) FALSE else cen,
               scale = if(is.null(sc)) FALSE else sc)
     if (retx) r$x <- X %*% W.opt
@@ -156,68 +163,96 @@ nscumcomp.default <-
     return(r)
 }
 
-emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol, verbosity = 0) {
+emcumca <- function(X, omega, ncomp, k, nneg, gamma, S, em.tol, em.maxiter, 
+                    verbosity = 0) {
     d <- ncol(X); n <- nrow(X)
+    
+    W_init <- function(W_) {  # if S is not null, W_ only contains the elements corresponding to the support
+        if (is.null(S)) {
+            W <- matrix(W_, d, ncomp)
+        } else {
+            W <- matrix(0, d, ncomp)   
+            W[S] <- W_
+        }
+        return(W)
+    }
     
     W <- matrix(rnorm(d*ncomp), d)
     if (nneg) {
         W <- abs(W)
     }
+    if (!is.null(S)) {
+        W[!S] <- 0
+    }
     W <- W/t(matrix(rep(sqrt(colSums(W^2)), d), ncomp))
     
-    sdev.old <- 0
-    repeat {   
+    obj_old <- Inf
+    ii <- 0
+    while(ii < em.maxiter) {   
         Z <- tryCatch(X%*%W%*%solve(t(W)%*%W), 
                  error = function(e) {
                      stop("Co-linear principal axes, try increasing the orthonormality penalty 'gamma'.")
                  }
-        )
-        
-        sdev <- apply(Z, 2, sd)
-        if (all(abs(sdev - sdev.old)/sdev < em.tol)) {
-            break
-        }
-        sdev.old <- sdev
-        
-        if (verbosity > 1) {
-            print(paste("cum. variance: ", format(sum(sdev), digits = 4),
-                        " - ortho penalty: ", format(sum((t(W)%*%W - diag(ncomp))^2), digits = 4),
-                        sep = ""
-                        )
-                  )
-        }
+        )  
         
         # objective function
         if (isTRUE(all.equal(omega, rep(1, nrow(X))))) {
-            fn <- function(W) {
-                dim(W) <- c(d, ncomp)
+            fn <- function(W_) {
+                W <- W_init(W_)
                 return( sum((X-Z%*%t(W))^2) + gamma*sum((t(W)%*%W - diag(ncomp))^2) )
-            }
-            
+            }   
         } else {
-            fn <- function(W) {
-                dim(W) <- c(d, ncomp)
+            fn <- function(W_) {
+                W <- W_init(W_)
                 return( omega%*%rowSums((X-Z%*%t(W))^2) + gamma*sum((t(W)%*%W - diag(ncomp))^2) )
-            }
-            
+            }  
         }
         
         # gradient
         if (isTRUE(all.equal(omega, rep(1, nrow(X))))) {
             tZZ <- t(Z)%*%Z
             tXZ <- t(X)%*%Z
-            gr <- function(W) {
-                dim(W) <- c(d, ncomp)
-                return( 2*(W%*%tZZ - tXZ) + 4*gamma*(W%*%t(W)%*%W - W) )
+            gr <- function(W_) {
+                W <- W_init(W_)
+                G <- 2*(W%*%tZZ - tXZ) + 4*gamma*(W%*%(t(W)%*%W) - W)
+                if (is.null(S)) {
+                    return(G)
+                } else {
+                    return(G[S])
+                }
             }
         } else {
             OZ <- matrix(rep(omega, ncomp), n)*Z
             tZOZ <- t(Z)%*%OZ
             tXOZ <- t(X)%*%OZ
-            gr <- function(W) {
-                dim(W) <- c(d, ncomp)
-                return( 2*(W%*%tZOZ - tXOZ) + 4*gamma*(W%*%t(W)%*%W - W) )
+            gr <- function(W_) {
+                W <- W_init(W_)
+                G <- 2*(W%*%tZOZ - tXOZ) + 4*gamma*(W%*%(t(W)%*%W) - W)
+                if (is.null(S)) {
+                    return(G)
+                } else {
+                    return(G[S])
+                }
             }
+        }
+        
+        if (is.null(S)) {
+            obj <- fn(W)     
+        } else {
+            obj <- fn(W[S])   
+        }
+        if ((obj == 0) || (abs(obj-obj_old)/obj < em.tol)) {
+            break
+        }
+        obj_old <- obj
+        
+        if (verbosity > 1) {
+            print(paste("approximation error: ", 
+                        format(sum((X-Z%*%t(W))^2), digits = 4),
+                        " - ortho penalty: ", 
+                        format(sum((t(W)%*%W - diag(ncomp))^2), digits = 4),
+                        sep = "")
+            )
         }
         
         control <- list()
@@ -226,10 +261,17 @@ emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol, verbosity = 0) {
         } else {
             control$trace <- 0
         }
-        W.star <- optim(W, fn, gr, method = "L-BFGS-B",
-                        lower = if (nneg) 0 else -Inf, control = control)$par
-        
-        if (k < d*ncomp) {        
+            
+        if (is.null(S)) {
+            W.star <- optim(W, fn, gr, method = "L-BFGS-B",
+                            lower = if (nneg) 0 else -Inf, control = control)$par    
+        } else {
+            W.star <- matrix(0, d, ncomp)
+            W.star[S] <- optim(W[S], fn, gr, method = "L-BFGS-B",
+                            lower = if (nneg) 0 else -Inf, control = control)$par
+        }
+         
+        if (is.null(S) && (k < d*ncomp)) {        
             # soft thresholding
             srt <- sort(abs(W.star), decreasing = TRUE)
             W <- pmax(abs(W.star) - srt[k+1], 0)*sign(W.star)      
@@ -239,10 +281,15 @@ emcumca <- function(X, omega, ncomp, k, nneg, gamma, em.tol, verbosity = 0) {
         
         norms <- sqrt(colSums(W^2))
         if (any(norms == 0))
-            stop("Principal axis is the zero vector, try increasing 'k' or decreasing 'ncomp'.")
+            stop(paste("Principal axis is the zero vector, try increasing k > ", 
+                       k, " or decreasing ncomp < ", ncomp, ".", sep=""))
         W <- W/t(matrix(rep(norms, d), ncomp))
+        ii <- ii + 1
     }
-    return(list(W=W, sdev=sdev))
+    if (ii == em.maxiter)
+        warning("maximum number of EM iterations reached before convergence")
+    
+    return(list(W=W, obj=obj))
 }
 
 #' @method nscumcomp formula
