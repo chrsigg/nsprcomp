@@ -13,13 +13,29 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-#' Cardinality of Column Vectors
-#' 
-#' Computes the cardinality (the sum of non-zero elements) of each column of 
-#' the matrix \eqn{\mathbf{W}}{W}.
-#' 
-#' @export
-#' @param W a numeric matrix, e.g. the rotation matrix of a sparse PCA analysis
-cardinality <- function(W) {
-    return(colSums(abs(as.matrix(W)) > 0))
-}
+context("percentage explained additional variance")
+
+test_that("PCA sums to 1", {
+    set.seed(1)
+    
+    X <- matrix(runif(10*5), 10)
+    pc <- prcomp(X)
+    expect_equal(sum(peav(X, pc$rotation)), 1)
+    
+    X <- matrix(runif(10*5), 5)
+    pc <- prcomp(X)
+    expect_equal(sum(peav(X, pc$rotation)), 1)
+})
+
+test_that("arbitrary rotation sums to 1", {
+    set.seed(1)
+    
+    X <- matrix(runif(10*5), 10)
+    W <- qr.Q(qr(matrix(rnorm(5*5),5)))
+    expect_equal(sum(peav(X, W)), 1)
+    
+    X <- matrix(runif(10*5), 5)
+    W <- qr.Q(qr(matrix(rnorm(10*10),10)))
+    expect_equal(sum(peav(X, W)), 1)
+})
+

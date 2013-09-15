@@ -19,7 +19,7 @@ test_that("PCA equivalence, square", {
     set.seed(1)
     d <- 10
     X <- matrix(rnorm(d*d), d)
-    nspc.model <- nsprcomp(X, ncomp = d-1, em.tol = 1e-10)
+    nspc.model <- nsprcomp(X, ncomp = d-1, em_tol = 1e-10)
     pc.model <- prcomp(X)
     
     rot_nrm <- norm(abs(nspc.model$rotation) - abs(pc.model$rotation[ ,1:(d-1)]), "F")
@@ -35,7 +35,7 @@ test_that("PCA equivalence, fat", {
     d <- 10
     n <- 5
     X <- matrix(rnorm(n*d), n)
-    nspc.model <- nsprcomp(X, ncomp = n-1, em.tol = 1e-10)
+    nspc.model <- nsprcomp(X, ncomp = n-1, em_tol = 1e-10)
     pc.model <- prcomp(X)
     
     rot_nrm <- norm(abs(nspc.model$rotation) - abs(pc.model$rotation[ ,1:(n-1)]), "F")
@@ -51,7 +51,7 @@ test_that("PCA equivalence, skinny", {
     d <- 5
     n <- 10
     X <- matrix(rnorm(n*d), n)
-    nspc.model <- nsprcomp(X, ncomp = d-1, em.tol = 1e-10)
+    nspc.model <- nsprcomp(X, ncomp = d-1, em_tol = 1e-10)
     pc.model <- prcomp(X)
     
     rot_nrm <- norm(abs(nspc.model$rotation) - abs(pc.model$rotation[ ,1:(d-1)]), "F")
@@ -75,8 +75,7 @@ test_that("rank of matrix smaller than ncomp", {
     a <- 1:5
     X <- a %o% a
     
-    expect_warning(nsprcomp(X, ncomp = 3))
-    nspc <- suppressWarnings(nsprcomp(X, ncomp = 3))
+    nspc <- nsprcomp(X, ncomp = 3)
     expect_true(length(nspc$sdev) == 1)
 })
 

@@ -1,23 +1,14 @@
+library(MASS)
 set.seed(1)
 
 # Regular PCA, with tolerance set to return five PCs
-prc <- prcomp(Boston, tol = 0.35, scale. = TRUE)
-prc
+prcomp(Boston, tol = 0.35, scale. = TRUE)
 
-# Sparse cumulative PCA with five components and 30 non-zero loadings. 
-# The orthonormality penalty is set to a value which
-# avoids co-linear principal axes. Note that for this example (as in general), 
-# the non-zero loadings are not distributed uniformly over the components.
-scc <- nscumcomp(Boston, ncomp = 5, k = 30, gamma = 1e11, scale. = TRUE)  
-scc
-t(scc$rotation)%*%scc$rotation  # quasi-orthogonality of the PAs
-sum(abs(scc$rotation) > 0 )
+# Sparse cumulative PCA with five components and 20 non-zero loadings. 
+# The orthonormality penalty is set to a value which avoids co-linear principal 
+# axes. Note that the non-zero loadings are not distributed uniformly over 
+# the components.
+nscumcomp(Boston, ncomp = 5, k = 20, gamma = 1e3, scale. = TRUE)  
 
 # Non-negative sparse cumulative PCA
-nscc <- nscumcomp(Boston, ncomp = 5, nneg = TRUE, k = 30, gamma = 1e4, 
-                  scale. = TRUE)  
-nscc
-t(nscc$rotation)%*%nscc$rotation  # quasi-orthogonality of the PAs
-sum(abs(nscc$rotation) > 0 )  # k is only an upper bound
-
-sapply(list(prc$sdev, scc$sdev, nscc$sdev), cumsum)  # cumulative variances
+nscumcomp(Boston, ncomp = 5, nneg = TRUE, k = 20, gamma = 1e3, scale. = TRUE)  

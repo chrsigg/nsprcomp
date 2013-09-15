@@ -1,5 +1,5 @@
 #  Copyright 2012, 2013 Christian Sigg
-#  Copyright 1995-2012 The R Core Team
+#  Copyright 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,24 +18,25 @@
 #' 
 #' Performs a constrained principal component analysis,
 #' where non-negativity and/or sparsity constraints are enforced on the principal axes.
-#' The results are returned as an object of class \code{nsprcomp}, which inherits from
+#' The result is returned as an object of class \code{nsprcomp}, which inherits from
 #' \code{prcomp}.
 #' 
 #' \code{nsprcomp} computes a principal component (PC) using expectation-maximization
-#' iterations, where non-negativity of the loadings is achieved by projection
-#' into the non-negative orthant, and sparsity is achieved by soft thresholding.
-#' Further PCs are computed by deflating the data matrix and computing the next PC,
-#' and so on.
+#' iterations, where non-negativity of the loadings is achieved by projecting
+#' the principal axis (PA) into the non-negative orthant, and sparsity of the 
+#' loadings is achieved by soft thresholding (Sigg and Buhmann, 2008). 
 #' 
-#' Because constrained principal axes (PAs) no longer correspond to true eigenvectors of the
-#' covariance matrix, the package implements three different matrix deflation 
-#' techniques to compute more than a single PC. Orthogonal projection deflation 
-#' (\code{"ortho"}) projects the data 
-#' matrix onto the orthocomplement space spanned by the principal axes. Schur 
-#' complement deflation (\code{"Schur"}) projects the data matrix onto the 
-#' orthocomplement space spanned by the principal components. Finally, subset 
-#' removal (\code{"remove"}) simply removes all columns of the data matrix which
-#' are associated with non-zero loadings.
+#' Because constrained principal axes no longer correspond to true eigenvectors 
+#' of the covariance matrix and are usually not pairwise orthogonal, special
+#' attention needs to be paid when computing more than a single PC. The
+#' algorithm implements the generalized deflation method proposed by
+#' Mackey (2009) to maximize the additional variance of each
+#' component. Given a basis of the space spanned by the previous PAs, the
+#' variance of the PC is maximized after projecting the current PA to the
+#' ortho-complement space of the basis. This procedure maximizes the
+#' additional variance not explained by previous components, and is
+#' identical to standard PCA if no sparsity or non-negativity constraints
+#' are enforced on the PAs.
 #' 
 #' See the references for further details. 
 #' 
@@ -48,49 +49,46 @@ nsprcomp <- function (x, ...) UseMethod("nsprcomp")
 #' @method nsprcomp default
 #' @S3method nsprcomp default
 #' @rdname nsprcomp
-#' @param retx a logical value indicating whether the principal components
-#' (i.e. \code{x} projected into the principal subspace) should be returned.
-#' @param ncomp \code{NULL} or an integer indicating the number of principal 
-#'   components to be computed. With the default setting, PCs are 
-#'   computed until \code{x} is fully deflated, or if \code{tol} is specified,
-#'   until the PC magnitude drops below the relative tolerance threshold.
-#'   Alternatively, \code{ncomp} can be specified implicitly if \code{k} is given
-#'   as a vector.
+#' @param retx a logical value indicating whether the principal components,
+#'   i.e. \code{x} projected into the principal subspace, should be returned.
+#' @param ncomp the number of principal components (PCs) 
+#'   to be computed. With the default setting, PCs are 
+#'   computed until \code{x} is fully deflated. \code{ncomp} can be specified 
+#'   implicitly if \code{k} is given as a vector.
 #' @param omega a vector with as many entries as there are data samples, to
-#'   perform weighted PCA (analogous to weighted least-squares). The default is an 
-#'   equal weighting of all samples.
+#'   perform weighted PCA (analogous to weighted least-squares regression). 
+#'   The default is an equal weighting of all samples.
 #' @param k either a scalar or a vector of length \code{ncomp}, specifying the
-#'   upper bounds on the cardinalities of the principal axes.
-#' @param nneg a logical value indicating whether the principal axes should be
-#'   constrained to the non-negative orthant.
-#' @param deflation a character string which is either \code{"ortho"}, \code{"Schur"} 
-#'   or \code{"remove"}, indicating the deflation method to be used when computing 
-#'   more than a single principal component (see the details section).
+#'   upper bounds on the cardinalities of the principal axes (PAs).
+#' @param nneg a logical value indicating whether the loadings should be 
+#'   non-negative, i.e. the PAs should be constrained to the non-negative orthant.
 #' @param center a logical value indicating whether the empirical mean of \code{x}
-#'   should be subtracted. Alternately, a vector of
+#'   should be subtracted. Alternatively, a vector of
 #'   length equal the number of columns of \code{x} can be supplied.
 #'   The value is passed to \code{\link{scale}}.
 #' @param scale. a logical value indicating whether the columns of \code{x} should
 #'   be scaled to have unit variance before the analysis takes
-#'   place. The default is \code{FALSE} for consistency with S, but
-#'   in general scaling is advisable.  Alternatively, a vector of length
+#'   place. The default is \code{FALSE} for consistency with \code{prcomp}.
+#'   Alternatively, a vector of length
 #'   equal the number of columns of \code{x} can be supplied.  The
 #'   value is passed to \code{\link{scale}}.
-#' @param tol a value indicating the magnitude below which components
+#' @param tol a threshold indicating the magnitude below which components
 #'   should be omitted. Components are omitted if their
 #'   standard deviations are less than or equal to \code{tol} times the
 #'   standard deviation of the first component.
 #'   With the default \code{NULL} setting, no components
 #'   are omitted.  With \code{tol = 0} or \code{tol = sqrt(.Machine$double.eps)}, 
 #'   essentially constant components are omitted.
-#' @param nrestart an integer indicating the number of random restarts for computing
+#' @param nrestart the number of random restarts for computing
 #'   the principal component via expectation-maximization (EM) iterations. The solution 
 #'   achieving maximum standard deviation over all random restarts is kept. A 
-#'   value greater than one can help to avoid bad local optima.
-#' @param em.tol a lower bound on the minimum relative change of standard deviation, 
-#'   used as the stopping criterion for the EM iterations. If the relative change
-#'   of PC magnitude changes less than \code{em.tol} between iterations, 
+#'   value greater than one can help to avoid bad local maxima.
+#' @param em_tol If the relative change
+#'   of the objective is less than \code{em_tol} between iterations, 
 #'   the EM procedure is asssumed to have converged to a local optimum.
+#' @param em_maxiter the maximum number of EM iterations to be performed. The
+#'   EM procedure is terminated if either the \code{em_tol} or the \code{em_maxiter}
+#'   criterion is satisfied.
 #' @param rety a logical value indicating whether the deflated data matrix
 #'   should be returned.
 #' @param verbosity an integer specifying the verbosity level. Greater values
@@ -98,18 +96,27 @@ nsprcomp <- function (x, ...) UseMethod("nsprcomp")
 #' 
 #' @return \code{nsprcomp} returns a list with class \code{(nsprcomp, prcomp)}
 #' containing the following elements:
-#' \item{sdev}{the standard deviations of the principal components.}
-#' \item{rotation}{the matrix of non-negative and/or sparse variable loadings, 
-#'   i.e. a matrix whose columns contain the principal axes.}
-#' \item{x}{if \code{retx} is \code{TRUE} the principal components, i.e. the 
-#'   data projected into the principal subspace (after centering and scaling 
-#'   if requested). For the formula method, \code{\link{napredict}()} is applied 
+#' \item{sdev}{the additional standard deviation explained by each component,
+#'   see \code{\link{asdev}}.}
+#' \item{rotation}{the matrix of non-negative and/or sparse loadings, 
+#'   containing the principal axes as columns.}
+#' \item{x}{the scores matrix \eqn{\mathbf{XW}}{X*W} containing the 
+#'   principal components as columns (after centering and scaling 
+#'   if requested). For the formula method, \code{\link{napredict}} is applied 
 #'   to handle the treatment of values omitted by the \code{na.action}.}
 #' \item{center, scale}{the centering and scaling used, or \code{FALSE}.}
 #' \item{y}{if \code{rety} is \code{TRUE} the deflated data matrix, for which all
 #'   principal axes lie in its null space.}
 #'   
-#' @note Deflating the data matrix accumulates numerical errors over successive
+#' @note The PCA terminology is not consistent across the literature. Given a zero
+#' mean data matrix \eqn{\mathbf{X}}{X} (with observations as rows) and a basis 
+#' \eqn{\mathbf{W}}{W} of the principal subspace,
+#' we define the scores matrix as \eqn{\mathbf{Z}=\mathbf{XW}}{Z=X*W} which 
+#' contains the principal components 
+#' as its columns. The columns of \eqn{\mathbf{W}}{W} are called the principal axes, and the 
+#' elements of \eqn{\mathbf{W}}{W} are called the loadings.
+#' 
+#' Deflating the data matrix accumulates numerical errors over successive
 #' PCs.
 #'   
 #' @references Sigg, C. D. and Buhmann, J. M. (2008) Expectation-Maximization 
@@ -118,86 +125,83 @@ nsprcomp <- function (x, ...) UseMethod("nsprcomp")
 #' @references Mackey, L. (2009) Deflation Methods for Sparse PCA. In 
 #'   \emph{Advances in Neural Information Processing Systems} (pp. 1017--1024).
 #'   
-#' @seealso \code{\link{prcomp}}, \code{\link{scale}}
+#' @seealso  \code{\link{asdev}},  \code{\link{peav}}, \code{\link{prcomp}}, 
+#'   \code{\link{scale}}
 #' 
 #' @example inst/nsprcomp_examples.R
-nsprcomp.default <-
-    function(x, retx = TRUE, ncomp = NULL, omega = rep(1, nrow(x)),
-             k = ncol(x), nneg = FALSE, 
-             center = TRUE, scale. = FALSE, tol = NULL,
-             nrestart = 5, em.tol = 1e-3, rety = FALSE, verbosity = 0, ...) 
-{        
+nsprcomp.default <- function(x, retx = TRUE, ncomp = min(dim(x)), 
+                             omega = rep(1, nrow(x)),
+                             k = ncol(x), nneg = FALSE, 
+                             center = TRUE, scale. = FALSE, tol = NULL,
+                             nrestart = 5, em_tol = 1e-3, em_maxiter = 100,
+                             rety = FALSE, 
+                             verbosity = 0, ...) {  
+    
     d <- ncol(x); n <- nrow(x)
-    if (is.null(ncomp)) {
-        nc <- min(d,n)
-    } else {
-        nc <- ncomp
-    }
-    
     if (length(k) == 1) {
-        k <- rep(k, nc)
-    } else if (!is.null(ncomp) && length(k) != ncomp) {
-        stop("length of k must agree with 'ncomp'")
+        k <- rep(k, ncomp)
     } else {
-        nc <- length(k)
+        ncomp <- length(k)
     }
     
-    x <- as.matrix(x)
-    x <- scale(x, center = center, scale = scale.)
-    cen <- attr(x, "scaled:center")
-    sc <- attr(x, "scaled:scale")
+    X <- as.matrix(x)
+    X <- scale(X, center = center, scale = scale.)
+    cen <- attr(X, "scaled:center")
+    sc <- attr(X, "scaled:scale")
     if(any(sc == 0))
         stop("cannot rescale a constant/zero column to unit variance")
     
-    sdev <- rep(0, nc)  # additional explained standard deviations
-    W <- matrix(0, d, nc)  # principal axes as columns
-    Q <- matrix(0, d, nc)  # orthogonalized principal axes as columns
-    Y <- x  # data matrix, to be deflated if nc > 1
-    for (cc in seq(nc)) {
-        sdev.opt <- -Inf
+    sdev <- rep(0, ncomp)  # additional explained standard deviations
+    W <- matrix(0, d, ncomp)  # principal axes as columns
+    Q <- matrix(0, d, ncomp)  # orthonormal basis for principal subspace
+    Xp <- X  # data matrix, to be deflated if ncomp > 1
+    for (cc in seq(ncomp)) {
+        obj_opt <- -Inf
         for (rr in seq(nrestart)) {
-            res <- empca(Y, Q[ , seq_len(cc-1), drop=FALSE], omega, k[cc], nneg, em.tol)
-                   
-            # variational renormalization
-            idx <- abs(res$w) > 0
-            w <- rep(0, d)
-            res_sub <- empca(Y[ , idx, drop=FALSE], 
-                             Q[idx, seq_len(cc-1), drop=FALSE], 
-                             omega, sum(idx), nneg, em.tol)
-            w[idx] <- res_sub$w                
+            res <- empca(Xp, Q[ , seq_len(cc-1), drop=FALSE], omega, k[cc], 
+                         nneg, em_tol, em_maxiter, verbosity)
             
-            # keep solution with maximum additional explained variance
-            sdev.cur <- res_sub$sdev
-            if (sdev.cur > sdev.opt) {
-                sdev.opt <- sdev.cur
-                w.opt <- w
+            # variational renormalization
+            supp <- abs(res$w) > 0  # support of w
+            w <- rep(0, d)
+            res <- empca(Xp[ , supp, drop=FALSE], 
+                         Q[supp, seq_len(cc-1), drop=FALSE], 
+                         omega, sum(supp), nneg, em_tol, em_maxiter, 
+                         verbosity)
+            w[supp] <- res$w                
+            
+            # keep solution with maximum objective
+            obj_cur <- res$obj
+            if (obj_cur > obj_opt) {
+                obj_opt <- obj_cur
+                w_opt <- w
             }
             if (verbosity > 0) {
                 print(paste("component ", cc, ": ",
-                            "maximal variance is ", format(sdev.opt, digits = 4),
+                            "maximum objective is ", format(obj_opt, digits = 4),
                             " at random restart ", rr-1, sep = ""))
             }
         }
-        sdev[cc] <- sdev.opt
-        w <- w.opt  
+        w <- w_opt  
         W[ ,cc] <- w
+        sdev[cc] <- sd(Xp%*%w)
         
         if (cc > 1) {
             q <- w - Q[ , 1:(cc-1)]%*%(t(Q[ , 1:(cc-1)])%*%w) 
         } else {
             q <- w
         }
-        q <- q/as.vector(sqrt(t(q)%*%q))
-        Y <- Y - Y%*%q%*%t(q)   
+        q <- q/normv(q)
+        Xp <- Xp - Xp%*%q%*%t(q)   
         Q[ , cc] <- q
         
         if (!is.null(tol) && sdev[cc] < tol*sdev[1]) {
             sdev <- sdev[1:(cc-1)]
             W <- W[ , 1:(cc-1), drop=FALSE]
             break
-        } else if (cc < nc && all(abs(Y) < 1e-14)) {  # data matrix fully deflated
-            if (!is.null(ncomp)) {
-                warning("data matrix is fully deflated, less than 'ncomp' components could be computed")            
+        } else if (cc < ncomp && all(abs(Xp) < 1e-14)) { 
+            if (verbosity > 0) {
+                print("data matrix is fully deflated, less than 'ncomp' components could be computed")            
             }
             sdev <- sdev[1:cc]
             W <- W[ , 1:cc, drop=FALSE]
@@ -205,59 +209,63 @@ nsprcomp.default <-
         }
     }
     
-    dimnames(W) <-
-        list(colnames(x), paste0("PC", seq_len(ncol(W))))
-        r <- list(sdev = sdev, rotation = W,
+    dimnames(W) <- list(colnames(X), paste0("PC", seq_len(ncol(W))))
+    r <- list(sdev = sdev, rotation = W,
               center = if(is.null(cen)) FALSE else cen,
               scale = if(is.null(sc)) FALSE else sc)
-    if (retx) r$x <- x %*% W
-    if (rety) r$y <- Y
+    if (retx) r$x <- X%*%W
+    if (rety) r$y <- Xp
     class(r) <- c("nsprcomp", "prcomp")
     return(r)
 }
 
-empca <- function(Y, Q, omega, k, nneg, em.tol) {
+empca <- function(Xp, Q, omega, k, nneg, em_tol, em_maxiter, verbosity) {
     
-    d <- ncol(Y); n <- nrow(Y)
+    d <- ncol(Xp); n <- nrow(Xp)
     
     w <- rnorm(d); 
     if (nneg) {
         w <- abs(w)
     }
-    w <- w/sqrt(t(w)%*%w)     
+    w <- w/normv(w)
     
-    sdev.old <- -Inf
-    repeat {   
-        z <- Y%*%w
+    obj_old <- -Inf
+    ii <- 0
+    while(ii < em_maxiter) {  
+        z <- Xp%*%w
         
-        sdev <- sd(as.vector(z))
-        if (abs(sdev - sdev.old)/sdev < em.tol) {
+        obj <- sum(z^2)
+        if (abs(obj - obj_old)/obj < em_tol) {
             break
         }
-        sdev.old <- sdev
-
-        w.star <- as.vector(t(Y)%*%(omega*z)/as.vector(t(z)%*%(omega*z)))
+        obj_old <- obj
+        
+        w_star <- as.vector(t(Xp)%*%(omega*z)/as.vector(t(z)%*%(omega*z)))
         if (nneg) {
-            w.star[w.star < 0] <- 0
+            w_star[w_star < 0] <- 0
         }
         if (k<d) {
             # soft thresholding
-            s <- sort(abs(w.star), decreasing = TRUE)
-            w <- pmax(abs(w.star) - s[k+1], 0)*sign(w.star)  
+            s <- sort(abs(w_star), decreasing = TRUE)
+            w <- pmax(abs(w_star) - s[k+1], 0)*sign(w_star)  
         } else {
-            w <- w.star
+            w <- w_star
         }
-
+        
         if (ncol(Q) > 0) {
             wo <- t(Q) %*% w
             w <- w/sqrt(t(w)%*%w - t(wo)%*%wo)    
         } else {
-            w <- w/sqrt(t(w)%*%w)     
+            w <- w/normv(w)
         }
+        
+        ii <- ii + 1
     }
+    if ((verbosity > 0) && (ii == em_maxiter))
+        print("maximum number of EM iterations reached before convergence")
     
-    w <- w/sqrt(t(w)%*%w)     
-    return(list(w=w, sdev=sdev))
+    w <- w/normv(w)
+    return(list(w=w, obj=obj))
 }
 
 #' @method nsprcomp formula
@@ -266,7 +274,7 @@ empca <- function(Y, Q, omega, k, nneg, em.tol) {
 #' @param formula a formula with no response variable, referring only to numeric variables.
 #' @param data an optional data frame (or similar: see
 #'   \code{\link{model.frame}}) containing the variables in the
-#'   formula \code{formula}.  By default the variables are taken from
+#'   \code{formula}. By default the variables are taken from
 #'   \code{environment(formula)}.
 #' @param subset an optional vector used to select rows (observations) of the
 #'   data matrix \code{x}.

@@ -20,18 +20,13 @@ test_that("cardinality", {
     X <- matrix(rnorm(5*5), 5)
     
     nspc.model <- nsprcomp(X, k = 1)
-    card <- colSums(abs(nspc.model$rotation) > 0)
-    expect_true(all(card == 1))
+    expect_true(all(cardinality(nspc.model$rotation) == 1))
     
     nspc.model <- nsprcomp(X, k = 4)
-    card <- colSums(abs(nspc.model$rotation) > 0)
-    expect_true(all(card <= 4))
+    expect_true(all(cardinality(nspc.model$rotation) <= 4))
     
     nspc.model <- nsprcomp(X, k = 1:5)
-    card <- colSums(abs(nspc.model$rotation) > 0)
-    expect_true(all(card <= 1:5))
-    
-    expect_error(nsprcomp(X, ncomp = 3, k = 1:2))
+    expect_true(all(cardinality(nspc.model$rotation) <= 1:5))
 })
 
 test_that("deflation", {

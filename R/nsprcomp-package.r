@@ -1,3 +1,3 @@
 #' @docType package
-#' @import MASS stats
+#' @import stats
 NULL

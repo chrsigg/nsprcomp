@@ -2,36 +2,33 @@ Package: nsprcomp
 Authors@R: c( person("Christian", "Sigg", email =
     "christian@sigg-iten.ch", role = c("aut", "cre")), person("R
     Core team", role = "aut"))
-Version: 0.3
-Date: 2013-05-28
+Version: 0.4
+Date: 2013-09-12
 Title: Non-Negative Sparse PCA
-Description: This package implements two methods for performing a
-    principal component analysis (PCA) with constraints, where
-    non-negativity and/or sparsity constraints are enforced on the
-    principal axes (PAs).
-    The function 'nsprcomp' computes one principal component (PC)
-    after the other. Each PA is optimized such that the corresponding
-    PC has maximum variance under the given constraints. Then the data
-    matrix is deflated using one of several deflation
-    methods, and the process is repeated with the deflated data matrix
-    to compute the next PC.
-    In contrast, the function 'nscumcomp' jointly computes all PCs
-    such that the cumulative variance is maximal, subject to an upper
-    bound on the divergence from orthonormality of the rotation
-    matrix.
-    Both functions have the same interface as the 'prcomp' function
-    from the 'stats' package (plus some extra parameters), and both
-    return the result of the analysis as an object of class
-    'nsprcomp', which inherits from 'prcomp'.
+Description: This package implements two methods for performing a constrained
+    principal component analysis (PCA), where non-negativity and/or sparsity
+    constraints are enforced on the principal axes (PAs). The function
+    'nsprcomp' computes one principal component (PC) after the other. Each PA
+    is optimized such that the corresponding PC has maximum additional variance
+    not explained by the previous components. In contrast, the function
+    'nscumcomp' jointly computes all PCs such that the cumulative variance is
+    maximal. Both functions have the same interface as the 'prcomp' function
+    from the 'stats' package (plus some extra parameters), and both return the
+    result of the analysis as an object of class 'nsprcomp', which inherits
+    from 'prcomp'.
 URL: http://sigg-iten.ch/research/
 License: GPL (>=2)
 Imports:
-    MASS,
     stats
 Suggests:
+    MASS,
     testthat,
     roxygen2
 Collate:
+    'asdev.R'
+    'cardinality.R'
+    'normv.R'
+    'nscumcomp.R'
     'nsprcomp-package.R'
     'nsprcomp.R'
-    'nscumcomp.R'
+    'peav.R'

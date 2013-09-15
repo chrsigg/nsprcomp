@@ -13,6 +13,7 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
+library(MASS)
 library(testthat)
 library(nsprcomp)
 

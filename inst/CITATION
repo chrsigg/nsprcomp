@@ -5,5 +5,5 @@ bibentry("InProceedings",
     booktitle = "Proc. 25th International Conference on Machine Learning",
     year = "2008",
 
-    mheader = "If you find this package useful for your work, please cite:"
+    mheader = "If you find this package useful, please cite:"
 )

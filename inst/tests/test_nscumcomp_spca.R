@@ -20,16 +20,13 @@ test_that("cardinality", {
     X <- matrix(rnorm(20*10), 20)
     
     nscc <- nscumcomp(X, ncomp = 5, gamma = 1)
-    card <- sum(abs(nscc$rotation) > 0)
-    expect_equal(card, 50)
+    expect_equal(sum(cardinality(nscc$rotation)), 50)
     
     nscc <- nscumcomp(X, ncomp = 1, gamma = 1, k = 5)
-    card <- sum(abs(nscc$rotation) > 0)
-    expect_equal(card, 5)
+    expect_equal(sum(cardinality(nscc$rotation)), 5)
     
     nscc <- nscumcomp(X, ncomp = 5, gamma = 50, k = 10)
-    card <- sum(abs(nscc$rotation) > 0)
-    expect_equal(card, 10)
+    expect_equal(sum(cardinality(nscc$rotation)), 10)
 })
 
 test_that("reconstruction", {
