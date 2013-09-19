@@ -294,7 +294,7 @@ nsprcomp.formula <- function (formula, data = NULL, subset, na.action, ...) {
     mf <- eval.parent(mf)
     ## this is not a `standard' model-fitting function,
     ## so no need to consider contrasts or levels
-    if (stats:::.check_vars_numeric(mf))
+    if (.check_vars_numeric(mf))
         stop("PCA applies only to numerical variables")
     na.act <- attr(mf, "na.action")
     mt <- attr(mf, "terms")
@@ -310,4 +310,15 @@ nsprcomp.formula <- function (formula, data = NULL, subset, na.action, ...) {
             res$x <- napredict(na.act, sc)
     }
     res
+}
+
+# copied as is from R 3.0.1 src/library/stats/R/prcomp.R to avoid a warning
+# when importing using :::
+.check_vars_numeric <- function(mf)
+{
+    ## we need to test just the columns which are actually used.
+    mt <- attr(mf, "terms")
+    mterms <- attr(mt, "factors")
+    mterms <- rownames(mterms)[apply(mterms, 1L, function(x) any(x > 0L))]
+    any(sapply(mterms, function(x) is.factor(mf[,x]) || !is.numeric(mf[,x])))
 }
