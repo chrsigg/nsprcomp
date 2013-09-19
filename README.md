@@ -34,8 +34,8 @@ probabilistic generative model of PCA (Sigg and Buhmann, 2008). A
 small example from the domain of portfolio optimization which
 demonstrates the usage is provided in [this blog
 entry](http://sigg-iten.ch/learningbits/2013/05/27/nsprcomp-is-on-cran/), and
-a comparison to the `spca` algorithm from the elasticnet package can be found
-here.
+a comparison to the `arrayspc` algorithm from the elasticnet package can be found
+[here](http://sigg-iten.ch/learningbits/2013/09/15/non-negative-sparse-pca-comparison/).
 
 nsprcomp Algorithm
 -------------------------
