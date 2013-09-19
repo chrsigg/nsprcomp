@@ -18,7 +18,7 @@
   to \code{\link{scale}}.}
 
   \item{scale.}{a logical value indicating whether the
-  columns of \code{x} should be scaled to have unit
+  columns of \code{X} should be scaled to have unit
   variance before the analysis takes place. The default is
   \code{FALSE} for consistency with \code{prcomp}.
   Alternatively, a vector of length equal the number of
