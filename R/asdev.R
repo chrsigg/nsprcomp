@@ -51,7 +51,7 @@ asdev <- function(X, W, center = TRUE, scale. = FALSE) {
     Q <- qr.Q(qr(W))
     Xp <- X
     for (cc in seq_len(nc)) {
-        sdev[cc] <- sd(Xp%*%W[ , cc])
+        sdev[cc] <- sd(as.vector(Xp%*%W[ , cc]))  # explicit casting to avoid warning in old R versions
         Xp <- Xp - Xp%*%Q[ , cc]%*%t(Q[ , cc])   
     }
     return(sdev)

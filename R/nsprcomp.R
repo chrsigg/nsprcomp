@@ -184,7 +184,7 @@ nsprcomp.default <- function(x, retx = TRUE, ncomp = min(dim(x)),
         }
         w <- w_opt  
         W[ ,cc] <- w
-        sdev[cc] <- sd(Xp%*%w)
+        sdev[cc] <- sd(as.vector(Xp%*%w))  # explicit casting to avoid warning in old R versions
         
         if (cc > 1) {
             q <- w - Q[ , 1:(cc-1)]%*%(t(Q[ , 1:(cc-1)])%*%w) 
