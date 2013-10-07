@@ -82,7 +82,7 @@ nsprcomp <- function (x, ...) UseMethod("nsprcomp")
 #' @param nrestart the number of random restarts for computing
 #'   the principal component via expectation-maximization (EM) iterations. The solution 
 #'   achieving maximum standard deviation over all random restarts is kept. A 
-#'   value greater than one can help to avoid bad local maxima.
+#'   value greater than one can help to avoid poor local maxima.
 #' @param em_tol If the relative change
 #'   of the objective is less than \code{em_tol} between iterations, 
 #'   the EM procedure is asssumed to have converged to a local optimum.

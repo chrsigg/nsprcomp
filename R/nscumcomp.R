@@ -75,7 +75,7 @@ nscumcomp <- function (x, ...) UseMethod("nscumcomp")
 #' @param nrestart the number of random restarts for computing
 #'   the pseudo-rotation matrix via expectation-maximization (EM) iterations. The solution 
 #'   achieving the minimum of the objective function over all random restarts is kept. A 
-#'   value greater than one can help to avoid bad local minima.
+#'   value greater than one can help to avoid poor local minima.
 #' @param em_tol If the relative change
 #'   of the objective is less than \code{em_tol} between iterations, 
 #'   the EM procedure is asssumed to have converged to a local optimum.
