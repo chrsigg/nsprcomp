@@ -14,7 +14,7 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-#' Non-Negative Sparse PCA
+#' Non-Negative and Sparse PCA
 #' 
 #' Performs a constrained principal component analysis,
 #' where non-negativity and/or sparsity constraints are enforced on the principal axes.

@@ -14,7 +14,7 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-#' Non-Negative Sparse Cumulative PCA
+#' Non-Negative and Sparse Cumulative PCA
 #' 
 #' Performs a constrained PCA-like analysis on the given data matrix,
 #' where non-negativity and/or sparsity constraints are enforced on the principal axes (PAs).
