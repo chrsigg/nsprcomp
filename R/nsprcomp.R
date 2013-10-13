@@ -49,85 +49,80 @@ nsprcomp <- function (x, ...) UseMethod("nsprcomp")
 #' @method nsprcomp default
 #' @S3method nsprcomp default
 #' @rdname nsprcomp
-#' @param retx a logical value indicating whether the principal components,
-#'   i.e. \code{x} projected into the principal subspace, should be returned.
-#' @param ncomp the number of principal components (PCs) 
-#'   to be computed. With the default setting, PCs are 
-#'   computed until \code{x} is fully deflated. \code{ncomp} can be specified 
-#'   implicitly if \code{k} is given as a vector.
-#' @param omega a vector with as many entries as there are data samples, to
-#'   perform weighted PCA (analogous to weighted least-squares regression). 
-#'   The default is an equal weighting of all samples.
-#' @param k either a scalar or a vector of length \code{ncomp}, specifying the
+#' @param retx a logical value indicating whether the principal components, i.e.
+#'   \code{x} projected into the principal subspace, should be returned.
+#' @param ncomp the number of principal components (PCs) to be computed. With
+#'   the default setting, PCs are computed until \code{x} is fully deflated.
+#'   \code{ncomp} can be specified implicitly if \code{k} is given as a vector.
+#' @param omega a vector with as many entries as there are data samples, to 
+#'   perform weighted PCA (analogous to weighted least-squares regression). The
+#'   default is an equal weighting of all samples.
+#' @param k either a scalar or a vector of length \code{ncomp}, specifying the 
 #'   upper bounds on the cardinalities of the principal axes (PAs).
 #' @param nneg a logical value indicating whether the loadings should be 
-#'   non-negative, i.e. the PAs should be constrained to the non-negative orthant.
-#' @param center a logical value indicating whether the empirical mean of \code{x}
-#'   should be subtracted. Alternatively, a vector of
-#'   length equal the number of columns of \code{x} can be supplied.
+#'   non-negative, i.e. the PAs should be constrained to the non-negative
+#'   orthant.
+#' @param center a logical value indicating whether the empirical mean of (the
+#'   columns) of \code{x} should be subtracted. Alternatively, a vector of 
+#'   length equal the number of columns of \code{x} can be supplied. The value
+#'   is passed to \code{\link{scale}}.
+#' @param scale. a logical value indicating whether the columns of \code{x}
+#'   should be scaled to have unit variance before the analysis takes place. The
+#'   default is \code{FALSE} for consistency with \code{prcomp}. Alternatively,
+#'   a vector of length equal the number of columns of \code{x} can be supplied.
 #'   The value is passed to \code{\link{scale}}.
-#' @param scale. a logical value indicating whether the columns of \code{x} should
-#'   be scaled to have unit variance before the analysis takes
-#'   place. The default is \code{FALSE} for consistency with \code{prcomp}.
-#'   Alternatively, a vector of length
-#'   equal the number of columns of \code{x} can be supplied.  The
-#'   value is passed to \code{\link{scale}}.
-#' @param tol a threshold indicating the magnitude below which components
-#'   should be omitted. Components are omitted if their
-#'   standard deviations are less than or equal to \code{tol} times the
-#'   standard deviation of the first component.
-#'   With the default \code{NULL} setting, no components
-#'   are omitted.  With \code{tol = 0} or \code{tol = sqrt(.Machine$double.eps)}, 
-#'   essentially constant components are omitted.
-#' @param nrestart the number of random restarts for computing
-#'   the principal component via expectation-maximization (EM) iterations. The solution 
+#' @param tol a threshold indicating the magnitude below which components should
+#'   be omitted. Components are omitted if their standard deviations are less
+#'   than or equal to \code{tol} times the standard deviation of the first
+#'   component. With the default \code{NULL} setting, no components are omitted.
+#'   With \code{tol = 0} or \code{tol = sqrt(.Machine$double.eps)}, essentially
+#'   constant components are omitted.
+#' @param nrestart the number of random restarts for computing the principal
+#'   component via expectation-maximization (EM) iterations. The solution 
 #'   achieving maximum standard deviation over all random restarts is kept. A 
 #'   value greater than one can help to avoid poor local maxima.
-#' @param em_tol If the relative change
-#'   of the objective is less than \code{em_tol} between iterations, 
-#'   the EM procedure is asssumed to have converged to a local optimum.
-#' @param em_maxiter the maximum number of EM iterations to be performed. The
-#'   EM procedure is terminated if either the \code{em_tol} or the \code{em_maxiter}
-#'   criterion is satisfied.
-#' @param rety a logical value indicating whether the deflated data matrix
+#' @param em_tol If the relative change of the objective is less than
+#'   \code{em_tol} between iterations, the EM procedure is asssumed to have
+#'   converged to a local optimum.
+#' @param em_maxiter the maximum number of EM iterations to be performed. The EM
+#'   procedure is terminated if either the \code{em_tol} or the
+#'   \code{em_maxiter} criterion is satisfied.
+#' @param rety a logical value indicating whether the deflated data matrix 
 #'   should be returned.
-#' @param verbosity an integer specifying the verbosity level. Greater values
+#' @param verbosity an integer specifying the verbosity level. Greater values 
 #'   result in more output, the default is to be quiet.
-#' 
-#' @return \code{nsprcomp} returns a list with class \code{(nsprcomp, prcomp)}
-#' containing the following elements:
-#' \item{sdev}{the additional standard deviation explained by each component,
-#'   see \code{\link{asdev}}.}
-#' \item{rotation}{the matrix of non-negative and/or sparse loadings, 
-#'   containing the principal axes as columns.}
-#' \item{x}{the scores matrix \eqn{\mathbf{XW}}{X*W} containing the 
-#'   principal components as columns (after centering and scaling 
-#'   if requested). For the formula method, \code{\link{napredict}} is applied 
-#'   to handle the treatment of values omitted by the \code{na.action}.}
-#' \item{center, scale}{the centering and scaling used, or \code{FALSE}.}
-#' \item{y}{if \code{rety} is \code{TRUE} the deflated data matrix, for which all
-#'   principal axes lie in its null space.}
 #'   
-#' @note The PCA terminology is not consistent across the literature. Given a zero
-#' mean data matrix \eqn{\mathbf{X}}{X} (with observations as rows) and a basis 
-#' \eqn{\mathbf{W}}{W} of the principal subspace,
-#' we define the scores matrix as \eqn{\mathbf{Z}=\mathbf{XW}}{Z=X*W} which 
-#' contains the principal components 
-#' as its columns. The columns of \eqn{\mathbf{W}}{W} are called the principal axes, and the 
-#' elements of \eqn{\mathbf{W}}{W} are called the loadings.
-#' 
-#' Deflating the data matrix accumulates numerical errors over successive
-#' PCs.
+#' @return \code{nsprcomp} returns a list with class \code{(nsprcomp, prcomp)} 
+#'   containing the following elements: \item{sdev}{the additional standard
+#'   deviation explained by each component, see \code{\link{asdev}}.} 
+#'   \item{rotation}{the matrix of non-negative and/or sparse loadings, 
+#'   containing the principal axes as columns.} \item{x}{the scores matrix
+#'   \eqn{\mathbf{XW}}{X*W} containing the principal components as columns
+#'   (after centering and scaling if requested). For the formula method,
+#'   \code{\link{napredict}} is applied to handle the treatment of values
+#'   omitted by the \code{na.action}.} \item{center, scale}{the centering and
+#'   scaling used, or \code{FALSE}.} \item{y}{if \code{rety} is \code{TRUE} the
+#'   deflated data matrix, for which all principal axes lie in its null space.}
+#'   
+#' @note The PCA terminology is not consistent across the literature. Given a
+#'   zero mean data matrix \eqn{\mathbf{X}}{X} (with observations as rows) and a
+#'   basis \eqn{\mathbf{W}}{W} of the principal subspace, we define the scores
+#'   matrix as \eqn{\mathbf{Z}=\mathbf{XW}}{Z=X*W} which contains the principal
+#'   components as its columns. The columns of \eqn{\mathbf{W}}{W} are called
+#'   the principal axes, and the elements of \eqn{\mathbf{W}}{W} are called the
+#'   loadings.
+#'   
+#'   Deflating the data matrix accumulates numerical errors over successive PCs.
 #'   
 #' @references Sigg, C. D. and Buhmann, J. M. (2008) Expectation-Maximization 
-#'   for Sparse and Non-Negative PCA. In \emph{Proceedings of the 25th International 
-#'   Conference on Machine Learning} (pp. 960--967).
+#'   for Sparse and Non-Negative PCA. In \emph{Proceedings of the 25th
+#'   International Conference on Machine Learning} (pp. 960--967).
 #' @references Mackey, L. (2009) Deflation Methods for Sparse PCA. In 
 #'   \emph{Advances in Neural Information Processing Systems} (pp. 1017--1024).
 #'   
 #' @seealso  \code{\link{asdev}},  \code{\link{peav}}, \code{\link{prcomp}}, 
 #'   \code{\link{scale}}
-#' 
+#'   
 #' @example inst/nsprcomp_examples.R
 nsprcomp.default <- function(x, retx = TRUE, ncomp = min(dim(x)), 
                              omega = rep(1, nrow(x)),
