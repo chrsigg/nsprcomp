@@ -36,13 +36,13 @@
 #' @param W a numeric data matrix with the principal axes as columns
 #' @param center a logical value indicating whether the empirical mean of \code{X}
 #'   should be subtracted. Alternatively, a vector of
-#'   length equal the number of columns of \code{X} can be supplied.
+#'   length equal to the number of columns of \code{X} can be supplied.
 #'   The value is passed to \code{\link{scale}}.
 #' @param scale. a logical value indicating whether the columns of \code{X} should
 #'   be scaled to have unit variance before the analysis takes
 #'   place. The default is \code{FALSE} for consistency with \code{prcomp}.
 #'   Alternatively, a vector of length
-#'   equal the number of columns of \code{X} can be supplied.  The
+#'   equal to the number of columns of \code{X} can be supplied.  The
 #'   value is passed to \code{\link{scale}}.
 asdev <- function(X, W, center = TRUE, scale. = FALSE) {
     X <- scale(X, center, scale.)

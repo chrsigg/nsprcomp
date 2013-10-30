@@ -64,12 +64,12 @@ nsprcomp <- function (x, ...) UseMethod("nsprcomp")
 #'   orthant.
 #' @param center a logical value indicating whether the empirical mean of (the
 #'   columns) of \code{x} should be subtracted. Alternatively, a vector of 
-#'   length equal the number of columns of \code{x} can be supplied. The value
+#'   length equal to the number of columns of \code{x} can be supplied. The value
 #'   is passed to \code{\link{scale}}.
 #' @param scale. a logical value indicating whether the columns of \code{x}
 #'   should be scaled to have unit variance before the analysis takes place. The
 #'   default is \code{FALSE} for consistency with \code{prcomp}. Alternatively,
-#'   a vector of length equal the number of columns of \code{x} can be supplied.
+#'   a vector of length equal to the number of columns of \code{x} can be supplied.
 #'   The value is passed to \code{\link{scale}}.
 #' @param tol a threshold indicating the magnitude below which components should
 #'   be omitted. Components are omitted if their standard deviations are less
