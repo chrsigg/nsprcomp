@@ -11,7 +11,10 @@ nsprcomp(Boston, k = c(13,7,5,5,5), scale. = TRUE)
 # Non-negative sparse PCA with four components. Note that the principal axes
 # naturally have a high degree of orthogonality, because each component
 # maximizes the additional variance not already explained.
-nsprcomp(Boston, k=c(7,5,2,2), nneg = TRUE, scale. = TRUE)
+nspc <- nsprcomp(Boston, k = c(7,5,2,2), nneg = TRUE, scale. = TRUE)
+
+# continue the computation of components from a partial model
+nsprcomp(Boston, k = 3, ncomp = 5, nneg = TRUE, scale. = TRUE, partial_model = nspc)
 
 # The reconstruction error for each sample can be influenced using the 
 # weighting vector omega. To reconstruct the data, the generalized

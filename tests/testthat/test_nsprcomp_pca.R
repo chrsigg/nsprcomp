@@ -110,3 +110,40 @@ test_that("weighted approximation error", {
     nrm <- rowSums((X - X_hat)^2)
     expect_true(which.min(nrm) == 5)
 })
+
+test_that("sequential component computation", {
+    set.seed(1)
+    d <- 5
+    X <- scale(matrix(runif(d*d), d))
+    
+    pc.model <- prcomp(X)
+    nspc.model <- NULL
+    for (pp in seq(d-1)) {
+        nspc.model <- nsprcomp(X, ncomp = pp, em_tol = 1e-10, 
+                               partial_model = nspc.model)
+    }
+    
+    rot_nrm <- norm(abs(nspc.model$rotation) - abs(pc.model$rotation[ ,1:(d-1)]), "F")
+    expect_true(rot_nrm < 1e-3)
+    x_nrm <- norm(abs(nspc.model$x) - abs(pc.model$x[ ,1:(d-1)]), "F")
+    expect_true(x_nrm < 1e-3)
+    sdev_nrm <- sqrt(sum((nspc.model$sdev - pc.model$sdev[1:(d-1)])^2))
+    expect_true(sdev_nrm < 1e-3)
+})
+
+test_that("continuing an early stopped model", {
+    set.seed(1)
+    d <- 10
+    X <- scale(matrix(runif(d*d), d))
+    
+    pc.model <- prcomp(X)
+    nspc.model <- nsprcomp(X, tol = 0.5, em_tol = 1e-10)
+    nspc.model <- nsprcomp(X, em_tol = 1e-10, partial_model = nspc.model)
+    
+    rot_nrm <- norm(abs(nspc.model$rotation) - abs(pc.model$rotation[ ,1:(d-1)]), "F")
+    expect_true(rot_nrm < 1e-3)
+    x_nrm <- norm(abs(nspc.model$x) - abs(pc.model$x[ ,1:(d-1)]), "F")
+    expect_true(x_nrm < 1e-3)
+    sdev_nrm <- sqrt(sum((nspc.model$sdev - pc.model$sdev[1:(d-1)])^2))
+    expect_true(sdev_nrm < 1e-3)
+})

@@ -22,13 +22,5 @@ Imports:
     stats
 Suggests:
     MASS,
-    testthat,
+    testthat (>= 0.8),
     roxygen2
-Collate:
-    'asdev.R'
-    'cardinality.R'
-    'normv.R'
-    'nscumcomp.R'
-    'nsprcomp-package.R'
-    'nsprcomp.R'
-    'peav.R'

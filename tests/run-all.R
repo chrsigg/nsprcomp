@@ -17,4 +17,4 @@ library(MASS)
 library(testthat)
 library(nsprcomp)
 
-test_package("nsprcomp")
+test_check("nsprcomp")

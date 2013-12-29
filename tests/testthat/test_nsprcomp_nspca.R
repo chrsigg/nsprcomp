@@ -44,11 +44,11 @@ test_that("deflation", {
     set.seed(1)
     X = matrix(runif(n*d), n)
     
-    nspc <- nsprcomp(X, k = k, nneg = TRUE, rety = TRUE)
+    nspc <- nsprcomp(X, k = k, nneg = TRUE)
     W <- nspc$rotation
-    Y <- nspc$y
+    Xp <- nspc$xp
     for (cc in seq(length(nspc$sdev))) {
-        expect_true(sum(abs(Y%*%W[ ,cc])) < 1e-10)
+        expect_true(sum(abs(Xp%*%W[ ,cc])) < 1e-10)
     }
 })
 
