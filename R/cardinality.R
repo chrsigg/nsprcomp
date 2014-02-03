@@ -19,7 +19,7 @@
 #' the matrix \eqn{\mathbf{W}}{W}.
 #' 
 #' @export
-#' @param W a numeric matrix, e.g. the rotation matrix of a sparse PCA analysis
-cardinality <- function(W) {
-    return(colSums(abs(as.matrix(W)) > 0))
+#' @param w a numeric matrix, e.g. the rotation matrix of a sparse PCA analysis
+cardinality <- function(w) {
+    return(colSums(abs(as.matrix(w)) > 0))
 }

@@ -20,11 +20,11 @@ test_that("PCA sdev equivalence", {
     
     X <- matrix(runif(10*5), 10)
     pc <- prcomp(X)
-    expect_equal(asdev(X, pc$rotation), pc$sdev)
+    expect_equal(asdev(X, pc$rotation)$sdev, pc$sdev)
     
     X <- matrix(runif(10*5), 5)
     pc <- prcomp(X)
-    expect_equal(asdev(X, pc$rotation), pc$sdev)
+    expect_equal(asdev(X, pc$rotation)$sdev, pc$sdev)
 })
 
 test_that("sparse PCA sdev equivalence", {
@@ -32,11 +32,11 @@ test_that("sparse PCA sdev equivalence", {
     
     X <- matrix(runif(10*5), 10)
     spc <- nsprcomp(X, k=2)
-    expect_equal(asdev(X, spc$rotation), spc$sdev)
+    expect_equal(asdev(X, spc$rotation)$sdev, spc$sdev)
     
     X <- matrix(runif(10*5), 5)
     spc <- nsprcomp(X, k=7)
-    expect_equal(asdev(X, spc$rotation), spc$sdev)
+    expect_equal(asdev(X, spc$rotation)$sdev, spc$sdev)
 })
 
 test_that("non-negative sparse PCA sdev equivalence", {
@@ -44,11 +44,11 @@ test_that("non-negative sparse PCA sdev equivalence", {
     
     X <- matrix(runif(10*5), 10)
     nspc <- nsprcomp(X, k=2, nneg=TRUE)
-    expect_equal(asdev(X, nspc$rotation), nspc$sdev)
+    expect_equal(asdev(X, nspc$rotation)$sdev, nspc$sdev)
     
     X <- matrix(runif(10*5), 5)
     nspc <- nsprcomp(X, k=7, nneg=TRUE)
-    expect_equal(asdev(X, nspc$rotation), nspc$sdev)
+    expect_equal(asdev(X, nspc$rotation)$sdev, nspc$sdev)
 })
 
 test_that("total variance of arbitrary rotation", {
@@ -59,5 +59,5 @@ test_that("total variance of arbitrary rotation", {
     X <- matrix(rnorm(n*d), n)
     W <- qr.Q(qr(matrix(rnorm(d*d),d)))
     
-    expect_equal(sum(asdev(X, W)^2), sum(scale(X, T, F)^2)/(n-1))
+    expect_equal(sum(asdev(X, W)$sdev^2), sum(scale(X, T, F)^2)/(n-1))
 })

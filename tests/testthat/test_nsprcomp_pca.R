@@ -68,7 +68,10 @@ test_that("sdev tolerance early stopping", {
     X <- matrix(runif(10*10), 10)
     
     nspc <- nsprcomp(X, tol = 0.3)
-    expect_true(nspc$sdev[length(nspc$sdev)]/nspc$sdev[1] >= 0.3)
+    ncomp <- length(nspc$sdev)
+    expect_true(nspc$sdev[ncomp]/nspc$sdev[1] >= 0.3)
+    expect_true(ncol(nspc$rotation) == ncomp)
+    expect_true(ncol(nspc$q) == ncomp)
 })
 
 test_that("rank of matrix smaller than ncomp", {
@@ -77,6 +80,8 @@ test_that("rank of matrix smaller than ncomp", {
     
     nspc <- nsprcomp(X, ncomp = 3)
     expect_true(length(nspc$sdev) == 1)
+    expect_true(ncol(nspc$rotation) == 1)
+    expect_true(ncol(nspc$q) == 1)
 })
 
 test_that("integer weighted PCA equal to repeated observations", {
