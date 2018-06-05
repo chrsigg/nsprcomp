@@ -1,4 +1,4 @@
-#  Copyright 2013, 2014 Christian Sigg
+#  Copyright 2013, 2014, 2018 Christian Sigg
 #  Copyright 1995-2012 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -39,14 +39,13 @@
 #' minimization of the objective, and sparsity is achieved by a subsequent soft
 #' thresholding of \eqn{\mathbf{W}}{W}.
 #' 
-#' @export nscumcomp
+#' @export
 #' @param x a numeric matrix or data frame which provides the data for the
 #'   analysis.
 #' @param ... arguments passed to or from other methods.
 nscumcomp <- function (x, ...) UseMethod("nscumcomp") 
 
-#' @method nscumcomp default
-#' @S3method nscumcomp default
+#' @export
 #' @rdname nscumcomp
 #' @param ncomp the number of principal components (PCs) to be computed. The 
 #'   default is to compute a full basis for \code{x}.
@@ -110,7 +109,7 @@ nscumcomp <- function (x, ...) UseMethod("nscumcomp")
 #' @seealso \code{\link{asdev}},  \code{\link{peav}}, \code{\link{nsprcomp}}, 
 #'   \code{\link{scale}}
 #'   
-#' @example inst/nscumcomp_examples.R
+#' @example inst/atexample/nscumcomp_examples.R
 nscumcomp.default <-
     function(x, ncomp = min(dim(x)), 
              omega = rep(1, nrow(x)),
@@ -314,8 +313,7 @@ emcumca <- function(X, omega, ncomp, k, nneg, gamma, S, em_tol, em_maxiter,
     return(list(W=W, obj=obj))
 }
 
-#' @method nscumcomp formula
-#' @S3method nscumcomp formula
+#' @export
 #' @rdname nscumcomp
 #' @param formula a formula with no response variable, referring only to numeric variables.
 #' @param data an optional data frame (or similar: see

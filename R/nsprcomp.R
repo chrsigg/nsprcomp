@@ -1,4 +1,4 @@
-#  Copyright 2012, 2013 Christian Sigg
+#  Copyright 2012, 2013, 2018 Christian Sigg
 #  Copyright 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -40,14 +40,13 @@
 #' 
 #' See the references for further details. 
 #' 
-#' @export nsprcomp
+#' @export
 #' @param x a numeric matrix or data frame which provides the data 
 #'   for the principal component analysis.
 #' @param ... arguments passed to or from other methods.
 nsprcomp <- function (x, ...) UseMethod("nsprcomp") 
 
-#' @method nsprcomp default
-#' @S3method nsprcomp default
+#' @export
 #' @rdname nsprcomp
 #' @param retx a logical value indicating whether the principal components, i.e.
 #'   \code{x} projected into the principal subspace, should be returned.
@@ -128,7 +127,7 @@ nsprcomp <- function (x, ...) UseMethod("nsprcomp")
 #' @seealso  \code{\link{asdev}},  \code{\link{peav}}, \code{\link{prcomp}}, 
 #'   \code{\link{scale}}
 #'   
-#' @example inst/nsprcomp_examples.R
+#' @example inst/atexample/nsprcomp_examples.R
 nsprcomp.default <- function(x, retx = TRUE, ncomp = min(dim(x)), 
                              omega = rep(1, nrow(x)),
                              k = ncol(x), nneg = FALSE, 
@@ -284,7 +283,7 @@ empca <- function(Xp, Q, omega, k, nneg, em_tol, em_maxiter, verbosity) {
         
         if (ncol(Q) > 0) {
             wo <- t(Q) %*% w
-            w <- w/sqrt(t(w)%*%w - t(wo)%*%wo)    
+            w <- w/as.vector(sqrt(t(w)%*%w - t(wo)%*%wo))
         } else {
             w <- w/normv(w)
         }
@@ -298,8 +297,7 @@ empca <- function(Xp, Q, omega, k, nneg, em_tol, em_maxiter, verbosity) {
     return(list(w=w, obj=obj))
 }
 
-#' @method nsprcomp formula
-#' @S3method nsprcomp formula
+#' @export
 #' @rdname nsprcomp
 #' @param formula a formula with no response variable, referring only to numeric variables.
 #' @param data an optional data frame (or similar: see
