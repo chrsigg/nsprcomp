@@ -1,4 +1,4 @@
-#  Copyright 2012, 2013 Christian Sigg
+#  Copyright 2012, 2013, 2018 Christian Sigg
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -13,8 +13,6 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-library(MASS)
-library(testthat)
-library(nsprcomp)
-
-test_check("nsprcomp")
+if (require(testthat) && require(MASS) && require(nsprcomp)) {
+  test_check("nsprcomp")
+}
