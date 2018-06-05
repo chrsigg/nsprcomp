@@ -30,17 +30,19 @@ over the cardinality of the PAs.
 
 This package implements two non-negative and/or sparse PCA algorithms
 which are rooted in _expectation-maximization_ (EM) for a
-probabilistic generative model of PCA (Sigg and Buhmann, 2008). A
-small example from the domain of portfolio optimization which
-demonstrates the usage is provided in [this blog
-entry](http://sigg-iten.ch/learningbits/2013/05/27/nsprcomp-is-on-cran/), and
+probabilistic generative model of PCA (Sigg and Buhmann, 2008). The `nsprcomp`
+algorithm can also be described as applying a soft-thresholding operator to the well-known
+power iteration method for computing eigenvalues.
+
+A small example from the domain of portfolio optimization is provided in [this blog
+post](http://sigg-iten.ch/learningbits/2013/05/27/nsprcomp-is-on-cran/), and
 a comparison to the `arrayspc` algorithm from the elasticnet package can be found
 [here](http://sigg-iten.ch/learningbits/2013/09/15/non-negative-sparse-pca-comparison/).
 
 nsprcomp Algorithm
 -------------------------
 
-In each EM iteration of the `nsprcomp`algorithm, a soft thresholding
+In each EM (or power) iteration of the `nsprcomp` algorithm, a soft thresholding
 operator is applied to enforce sparsity of the PA, and projection to
 the non-negative orthant is applied to enforce non-negativity.  Once
 the EM procedure has converged and the support of the PA has been
@@ -48,8 +50,7 @@ identified, the non-zero coefficients are recomputed to maximize the
 variance of the PC. Finally, because EM is a local optimizer, random
 restarts are employed to (hopefully) avoid bad local minima. The same
 iterative procedure (without the non-negativity constraint) was later also
-proposed by Journee et al. (2010), although the motivation and
-derivation is different.
+proposed by Journee et al. (2010).
 
 The `nsprcomp` algorithm computes one PC after the other. Because
 constrained PAs no longer correspond to true eigenvectors of the
@@ -57,9 +58,8 @@ covariance matrix and are usually not pairwise orthogonal, special
 attention needs to be paid when computing more than a single PC. The
 algorithm implements the _generalized deflation method_ proposed by
 Mackey (2009) to maximize the additional variance of each
-component. Given a basis of the space spanned by the previous PAs, the
-variance of the PC is maximized after projecting the current PA to the
-ortho-complement space of the basis. This procedure maximizes the
+component. The variance of the PC is maximized after projecting the PA 
+to the ortho-complement of the space spanned by the previous PAs. This procedure maximizes the
 additional variance not explained by previous components, and is
 identical to standard PCA if no sparsity or non-negativity constraints
 are enforced on the PAs.
@@ -73,7 +73,7 @@ nscumcomp Algorithm
 -------------------------
 
 The `nscumcomp` algorithm jointly computes all PCs, such that the
-cumulative variance of all components is maximized. The computation is
+cumulative variance of the components is maximized. The computation is
 again based on EM iterations, but here the maximization step has to be
 carried out numerically. Non-negativity of the PAs is achieved by
 enforcing a zero lower bound in the L-BFGS-B algorithm used for
@@ -91,10 +91,8 @@ necessary to avoid PAs collapsing onto each other during the EM
 procedure.
 
 The `nscumcomp` algorithm also scales to large and high-dimensional
-data sets, as long as the number of components is not too large
-(i.e. inverting an nc by nc matrix can still be done, where nc is the
-number of components). But due to the numerical maximization of the
-M-step it is computationally more involved than the `nsprcomp`
+data sets. But due to the numerical maximization of the
+M-step, it is computationally more involved than the `nsprcomp`
 algorithm.
 
 The `nscumcomp` algorithm is currently unpublished.
@@ -104,8 +102,8 @@ References
 
 Kirby, M., & Sirovich, L. (1990). Application of the Karhunen-Loeve procedure for the characterization of human faces. _Pattern Analysis and Machine Intelligence, IEEE Transactions on_, 12(1), 103-108.
 
-Sigg, C. D., & Buhmann, J. M. (2008). Expectation-maximization for sparse and non-negative PCA. In _Proceedings of the 25th international conference on Machine learning_ (pp. 960-967).
+Sigg, C. D., & Buhmann, J. M. (2008). Expectation-maximization for sparse and non-negative PCA. In _Proceedings of the 25th International Conference on Machine Learning_ (pp. 960-967).
 
 Journee, M., Nesterov, Y., Richtarik, P., & Sepulchre, R. (2010). Generalized power method for sparse principal component analysis. _The Journal of Machine Learning Research_, 11, 517-553.
 
-Mackey, L. (2009). Deflation methods for sparse pca. _Advances in neural information processing systems_, 21, 1017-1024.
+Mackey, L. (2009). Deflation methods for sparse pca. _Advances in Neural Information Processing Systems_, 21, 1017-1024.
