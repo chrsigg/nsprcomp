@@ -39,8 +39,8 @@ test_that("non-negativity", {
 
 test_that("deflation", {
     k <- 4
-    d <- 20
-    n <- 100
+    d <- 10
+    n <- 20
     set.seed(1)
     X = matrix(runif(n*d), n)
     

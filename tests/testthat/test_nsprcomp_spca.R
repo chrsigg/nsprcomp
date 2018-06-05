@@ -32,8 +32,8 @@ test_that("cardinality", {
 test_that("deflation", {
     set.seed(1)
     k <- 4
-    d <- 20
-    n <- 100
+    d <- 10
+    n <- 20
     X = matrix(runif(n*d), n)
     
     nspc <- nsprcomp(X, k = k)
